@@ -34,6 +34,12 @@ function SignUpForm() {
         else if (errorCode === "auth/invalid-email") {
           setErrorMsg("Email is invalid");
         }
+        else if (errorCode === "auth/missing-password") {
+          setErrorMsg("Please enter a password");
+        }
+        else {
+          setErrorMsg(errorCode);
+        }
         console.log("error code: ", errorCode);
         console.log("error message: ", errorMessage);
         setLoading(false);

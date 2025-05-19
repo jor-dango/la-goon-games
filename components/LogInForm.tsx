@@ -36,6 +36,9 @@ function LogInForm() {
         else if (errorCode === "auth/invalid-email") {
           setErrorMsg("Email is invalid");
         }
+        else {
+          setErrorMsg(errorCode);
+        }
 
         console.log("error code: ", errorCode);
         console.log("error message: ", errorMessage);
