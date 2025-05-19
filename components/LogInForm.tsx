@@ -55,7 +55,7 @@ function LogInForm() {
       >
         Log In
       </button>
-      <a className='text-textsecondary hover:text-textsecondary/80 cursor-pointer text-center' onClick={() => window.location.href = '/signup'}>Don't have an account?</a>
+      <a className='text-textsecondary hover:text-textsecondary/80 cursor-pointer text-center' onClick={() => window.location.href = '/signup'}>Don&apos;t have an account?</a>
     </div>
   )
 }
