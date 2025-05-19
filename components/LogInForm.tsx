@@ -8,6 +8,7 @@ function LogInForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
 
   const db = getFirestore(app); // This literally does nothing but Firebase hates me if it's not here so wtv
   const auth = getAuth();
@@ -25,13 +26,26 @@ function LogInForm() {
       .catch((error) => {
         const errorCode = error.code;
         const errorMessage = error.message;
+        
+        if (errorCode === "auth/invalid-credential") {
+          setErrorMsg("Password is incorrect");
+        }
+        else if (errorCode === "auth/missing-password") {
+          setErrorMsg("Please enter a password");
+        }
+        else if (errorCode === "auth/invalid-email") {
+          setErrorMsg("Email is invalid");
+        }
 
+        console.log("error code: ", errorCode);
+        console.log("error message: ", errorMessage);
         setLoading(false);
       });
   }
 
   return (
     <div className='flex flex-col gap-8'>
+      <small className={`${errorMsg ? "block" : "hidden"} text-destructive`}>{errorMsg}</small>
       <input
         type="email"
         value={email}
