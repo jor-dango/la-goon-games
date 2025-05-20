@@ -39,8 +39,8 @@ function Form() {
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "metadata", "counters"), (doc) => {
-      if (doc.exists() && doc.data() && "numChallenges" in doc.data()) {
-        setChallengeInfo(prevState => ({ ...prevState, challengeID: doc.data().numChallenges }))
+      if (doc.exists() && doc.data() && "numChallengesTest" in doc.data()) {
+        setChallengeInfo(prevState => ({ ...prevState, challengeID: doc.data().numChallengesTest }))
       }
     })
 
@@ -93,11 +93,11 @@ function Form() {
     // console.log('Challenge being submitted: ', challengeInfo)
     try {
       setLoading(true);
-      await setDoc(doc(db, "challenges", challengeInfo.challengeID.toString()), {
+      await setDoc(doc(db, "testChallenges", challengeInfo.challengeID.toString()), {
         ...challengeInfo
       })
       await updateDoc(doc(db, "metadata", "counters"), {
-        numChallenges: challengeInfo.challengeID + 1
+        numChallengesTest: challengeInfo.challengeID + 1
       })
     }
     catch (error) {
