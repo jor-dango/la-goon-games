@@ -93,7 +93,7 @@ function Form() {
     // console.log('Challenge being submitted: ', challengeInfo)
     try {
       setLoading(true);
-      await setDoc(doc(db, "testChallenges", challengeInfo.challengeID.toString()), {
+      await setDoc(doc(db, "challenges", challengeInfo.challengeID.toString()), {
         ...challengeInfo
       })
       await updateDoc(doc(db, "metadata", "counters"), {
@@ -106,6 +106,8 @@ function Form() {
     finally {
       setLoading(false);
       window.alert("Challenge successfully submitted!")
+      setChallengeInfo(prevState => ({...prevState, challenge: ""}));
+      setChallengeInfo(prevState => ({...prevState, challengeType: null}));
     }
   }
 
@@ -150,7 +152,7 @@ function Form() {
               </DropdownMenuContent>
             </DropdownMenu>
             <small className='text-textsecondary max-w-[25rem]'>
-              {challengeInfo.challengeType === "Normal" ? "Normal challenges will be used once each, and will go into the normal challenge pool." : ""}
+              {challengeInfo.challengeType === "Normal" ? "Normal challenges will be used once each, and will go into the normal challenge pool. These could be challenges done during hikes, in the city, etc." : ""}
               {challengeInfo.challengeType === "Daily" ? "Daily challenges will be available every day for everyone; ex. \'Wake up at 9am\'." : ""}
               {challengeInfo.challengeType === "Negative" ? "Negative challenges will be available every day and deduct points; ex. \'Smell bad\'." : ""}
             </small>
