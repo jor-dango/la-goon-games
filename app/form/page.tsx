@@ -164,6 +164,7 @@ function Form() {
           >
             Submit
           </button>
+          <small className='text-textsecondary max-w-[25rem]'>Note: The point value for each challenge will be determined by the group as challenges are received.</small>
         </div>
       </div>
     </AuthProvider>
