@@ -38,7 +38,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           if (user) {
             setUser(user);
             const token = await user.getIdToken();
-            window.location.href = "/form";
           } else {
             setUser(null);
             window.location.href = "/signup";
