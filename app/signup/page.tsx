@@ -5,7 +5,7 @@ import React from 'react'
 function SignUp() {
   return (
       <div className="w-full h-[100vh] flex justify-center items-center">
-        <div className="max-w-[90%] flex flex-col gap-4 p-8 pb-0 border border-border rounded-2xl">
+        <div className="max-w-[90%] flex flex-col gap-4 p-8 pb-0 border border-border rounded-2xl bg-bglight">
           <div>
             <h3>
               Sign Up

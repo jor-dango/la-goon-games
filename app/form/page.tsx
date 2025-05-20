@@ -110,7 +110,7 @@ function Form() {
 
   return (
     <div className="w-full h-[100vh] flex justify-center items-center">
-      <div className="max-w-[95%] flex flex-col gap-8 p-8 border border-border rounded-2xl">
+      <div className="max-w-[95%] flex flex-col gap-8 p-8 border border-border rounded-2xl bg-bglight">
         {/* <button onClick={handleSignOut}>Log Out</button> */}
         <div>
           <small className='text-textsecondary'>Welcome {userInfo?.name}!</small>
