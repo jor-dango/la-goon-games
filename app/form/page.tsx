@@ -6,21 +6,7 @@ import { db, app } from '../firebase';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { AuthProvider } from '@/context/AuthProvider';
-
-type Challenge = {
-  author: string;
-  challenge: string;
-  challengeID: number;
-  challengeType: "Negative" | "Daily" | "Normal" | null;
-  completed: boolean;
-  pointval: number;
-  assignedPlayer: string | null;
-}
-
-type UserInfo = {
-  name: string;
-  points: number;
-}
+import { Challenge, UserInfo } from '@/lib/types';
 
 function Form() {
   const [user, setUser] = useState<User | null>(null);
