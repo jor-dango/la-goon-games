@@ -6,21 +6,7 @@ import { db, app } from '../firebase';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { ChevronDown } from 'lucide-react';
 import { AuthProvider } from '@/context/AuthProvider';
-
-type Challenge = {
-  author: string;
-  challenge: string;
-  challengeID: number;
-  challengeType: "Negative" | "Daily" | "Normal" | null;
-  completed: boolean;
-  pointval: number;
-  assignedPlayer: string | null;
-}
-
-type UserInfo = {
-  name: string;
-  points: number;
-}
+import { Challenge, UserInfo } from '@/lib/types';
 
 function Form() {
   const [user, setUser] = useState<User | null>(null);
@@ -39,8 +25,8 @@ function Form() {
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "metadata", "counters"), (doc) => {
-      if (doc.exists() && doc.data() && "numChallenges" in doc.data()) {
-        setChallengeInfo(prevState => ({ ...prevState, challengeID: doc.data().numChallenges }))
+      if (doc.exists() && doc.data() && "numChallengesTest" in doc.data()) {
+        setChallengeInfo(prevState => ({ ...prevState, challengeID: doc.data().numChallengesTest }))
       }
     })
 
@@ -93,11 +79,11 @@ function Form() {
     // console.log('Challenge being submitted: ', challengeInfo)
     try {
       setLoading(true);
-      await setDoc(doc(db, "challenges", challengeInfo.challengeID.toString()), {
+      await setDoc(doc(db, "testChallenges", challengeInfo.challengeID.toString()), {
         ...challengeInfo
       })
       await updateDoc(doc(db, "metadata", "counters"), {
-        numChallenges: challengeInfo.challengeID + 1
+        numChallengesTest: challengeInfo.challengeID + 1
       })
     }
     catch (error) {
