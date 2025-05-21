@@ -9,7 +9,10 @@ import { Team, UserInfo } from '@/lib/types';
 function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo>();
-  const [teamNames, setTeamNames] = useState<string[]>();
+  const [team, setTeam] = useState<{
+    points: number;
+    names: string[];
+  }>();
 
   useEffect(() => {
     getUser();
@@ -73,7 +76,7 @@ function Home() {
             teamNames.push(data.name);
           }
         }
-        setTeamNames(teamNames);
+        setTeam({points: yourTeam.points, names: teamNames});
       }
     }
   }
@@ -82,12 +85,17 @@ function Home() {
   return (
     <AuthProvider>
       <div className='w-full min-h-[100vh]'>
+        <div className='flex flex-col items-center w-full'>
+          <h1 className='text-textlight font-semibold'>{team?.points}</h1>
+          <p>Points Earned</p>
+        </div>
         <p className='text-textlight'>
-          {teamNames?.map((name) => (
+          {team?.names.map((name) => (
             <span>
               {name},&nbsp;
             </span>
           ))}
+          
         </p>
       </div>
     </AuthProvider>
