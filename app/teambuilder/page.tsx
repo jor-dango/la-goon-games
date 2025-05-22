@@ -9,7 +9,7 @@ import {
   where,
 } from "firebase/firestore";
 import { db } from "../firebase";
-import { Team, TeamsDoc } from "@/lib/types";
+import { Day, Team, TeamsDoc } from "@/lib/types";
 
 // query each player
 const querySnapshot = await getDocs(collection(db, "players"));
@@ -26,7 +26,7 @@ async function randomizeTeam() {
   const playerCopy = [...players];
   const teamSize = 3;
   const teamDoc: TeamsDoc = {
-    date: new Date().getUTCDate(),
+    date: new Date().getUTCDate() as Day,
     teams: [],
   };
   for (let i = 0; i < 3; i++) {
