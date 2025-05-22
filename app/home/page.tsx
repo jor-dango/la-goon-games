@@ -9,7 +9,8 @@ import { Team, UserInfo } from '@/lib/types';
 function Home() {
   const [user, setUser] = useState<User | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo>();
-  const [team, setTeam] = useState<{
+  const [team, setTeam] = useState<Team>();
+  const [teamInfo, setTeamInfo] = useState<{
     points: number;
     names: string[];
   }>();
@@ -18,8 +19,20 @@ function Home() {
     getUser();
   }, []);
   useEffect(() => {
+    async function getInfo() {
+      try {
+        await getUserInfo();
+        await getTeam();
+      }
+      catch (error) {
+        console.error(error);
+      }
+    }
     getInfo();
   }, [user]);
+  useEffect(() => {
+    parseTeamInfo();
+  }, [team])
 
   async function getUser() {
     const auth = getAuth();
@@ -28,56 +41,47 @@ function Home() {
     });
   }
 
-  // This function gets all the info from the DB needed to display info to the user
-  async function getInfo() {
-    try {
-      await getUserInfo();
-      await getTeamInfo();
-    }
-    catch (error) {
-      console.error(error);
-    }
-
-    async function getUserInfo() {
-      if (user) {
-        console.log("uid: ", user.uid)
-        const docSnap = await getDoc(doc(db, "players", user.uid));
-        if (docSnap.exists()) {
-          setUserInfo(docSnap.data() as UserInfo);
-        }
+  async function getUserInfo() {
+    if (user) {
+      console.log("uid: ", user.uid)
+      const docSnap = await getDoc(doc(db, "players", user.uid));
+      if (docSnap.exists()) {
+        setUserInfo(docSnap.data() as UserInfo);
       }
     }
+  }
 
-    async function getTeamInfo() {
-      let yourTeam: Team | null = null;
+  async function getTeam() {
 
-      const currentDate = new Date().getUTCDate();
-      const docsSnap = await getDocs(query(collection(db, "teams"), where("date", '==', currentDate - 1))); /* This will be a single doc */ /* This also doesn't work if there isn't a teams doc already made for the given date */
-      docsSnap.forEach((doc) => {
-        if (user) {
-          const teams: Team[] = doc.data().teams as Team[];
-          for (const i in teams) {
-            for (const j in teams[i].uuids) {
-              if (teams[i].uuids[j] === user.uid) {
-                yourTeam = teams[i];
-                break;
-              }
+    const currentDate = new Date().getUTCDate();
+    const docsSnap = await getDocs(query(collection(db, "teams"), where("date", '==', currentDate - 1))); /* This will be a single doc */ /* This also doesn't work if there isn't a teams doc already made for the given date */
+    docsSnap.forEach((doc) => {
+      if (user) {
+        const teams: Team[] = doc.data().teams as Team[];
+        for (const i in teams) {
+          for (const j in teams[i].uuids) {
+            if (teams[i].uuids[j] === user.uid) {
+              setTeam(teams[i]);
+              break;
             }
           }
         }
-      });
-      
-      if (yourTeam !== null) {
-        const teamNames: string[] = [];
-        for (let i = 0; i < yourTeam.uuids.length; i++) { // Typescript error here, potentially because the actual data comes from the awaited function above?
-          const docSnap = await getDoc(doc(db, "players", yourTeam.uuids[i]));
-          if (docSnap.exists()) {
-            const data: UserInfo = docSnap.data() as UserInfo;
-            teamNames.push(data.name);
-          }
-        }
-        setTeam({points: yourTeam.points, names: teamNames});
       }
+    });
+  }
+
+  async function parseTeamInfo() {
+    if (team) {
+      const teamNames: string[] = [];
+      for (let i = 0; i < team.uuids.length; i++) { // Typescript error here, potentially because the actual data comes from the awaited function above?
+        const docSnap = await getDoc(doc(db, "players", team.uuids[i]));
+        if (docSnap.exists()) {
+          const data: UserInfo = docSnap.data() as UserInfo;
+          teamNames.push(data.name);
+        }
+      }
+      setTeamInfo({ points: team.points, names: teamNames });
+
     }
   }
 
@@ -90,12 +94,12 @@ function Home() {
           <p>Points Earned</p>
         </div>
         <p className='text-textlight'>
-          {team?.names.map((index) => (
+          {teamInfo?.names.map((index) => (
             <span key={index}>
               {index},&nbsp;
             </span>
           ))}
-          
+
         </p>
       </div>
     </AuthProvider>
