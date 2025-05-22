@@ -52,12 +52,12 @@ function Home() {
       let yourTeam: Team | null = null;
 
       const currentDate = new Date().getUTCDate();
-      const docsSnap = await getDocs(query(collection(db, "teams"), where("date", '==', currentDate))); // This will be a single doc
+      const docsSnap = await getDocs(query(collection(db, "teams"), where("date", '==', currentDate - 1))); /* This will be a single doc */ /* This also doesn't work if there isn't a teams doc already made for the given date */
       docsSnap.forEach((doc) => {
         if (user) {
           const teams: Team[] = doc.data().teams as Team[];
-          for (let i in teams) {
-            for (let j in teams[i].uuids) {
+          for (const i in teams) {
+            for (const j in teams[i].uuids) {
               if (teams[i].uuids[j] === user.uid) {
                 yourTeam = teams[i];
                 break;
@@ -66,9 +66,9 @@ function Home() {
           }
         }
       });
-
+      
       if (yourTeam !== null) {
-        let teamNames: string[] = [];
+        const teamNames: string[] = [];
         for (let i = 0; i < yourTeam.uuids.length; i++) { // Typescript error here, potentially because the actual data comes from the awaited function above?
           const docSnap = await getDoc(doc(db, "players", yourTeam.uuids[i]));
           if (docSnap.exists()) {
@@ -90,9 +90,9 @@ function Home() {
           <p>Points Earned</p>
         </div>
         <p className='text-textlight'>
-          {team?.names.map((name) => (
-            <span>
-              {name},&nbsp;
+          {team?.names.map((index) => (
+            <span key={index}>
+              {index},&nbsp;
             </span>
           ))}
           

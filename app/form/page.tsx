@@ -103,7 +103,7 @@ function Form() {
   }
 
   async function getChallenges() {
-    let challenges: Challenge[] = [];
+    const challenges: Challenge[] = [];
     const docsSnap = await getDocs(query(collection(db, "testChallenges"), where("author", "==", userInfo?.name)));
     docsSnap.forEach((doc) => {
       challenges.push(doc.data() as Challenge);
@@ -186,7 +186,7 @@ function Form() {
               Submit a challenge
             </button>
             {challenges.map((challenge) =>
-              <div className="min-w-full max-w-[95%] flex flex-col p-8 border border-border rounded-lg bg-bglight">
+              <div key={challenge.challengeID} className="min-w-full max-w-[95%] flex flex-col p-8 border border-border rounded-lg bg-bglight">
                 <p className='font-semibold'>Challenge</p>
                 <p>{challenge.challenge}</p>
                 <br />
