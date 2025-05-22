@@ -7,6 +7,7 @@ import { db } from '../firebase';
 import { Team, UserInfo } from '@/lib/types';
 
 function Home() {
+  const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo>();
   const [team, setTeam] = useState<Team>();
@@ -31,7 +32,11 @@ function Home() {
     getInfo();
   }, [user]);
   useEffect(() => {
-    parseTeamInfo();
+    async function parseTeam() {
+      await parseTeamInfo();
+      setLoading(false);
+    }
+    parseTeam();
   }, [team])
 
   async function getUser() {
@@ -85,6 +90,17 @@ function Home() {
     }
   }
 
+  if (loading) {
+    return (
+    <AuthProvider>
+      <div className='flex justify-center items-center w-full min-h-[100vh]'>
+      <p className='text-textlight'>
+        Loading...
+      </p>
+      </div>
+    </AuthProvider>
+    )
+  }
 
   return (
     <AuthProvider>
