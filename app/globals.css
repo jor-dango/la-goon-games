@@ -167,6 +167,6 @@ small {
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-bgdark text-textlight;
+    @apply bg-bgdark text-textdark;
   }
 }
