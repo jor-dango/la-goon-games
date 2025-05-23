@@ -110,19 +110,23 @@ function Page() {
   }, [playersMap]);
 
   return (
-    <div>
-      <h1 className="text-textlight"> Team Builder</h1>
-      <button
-        className="bg-blue-500 text-white p-2 rounded"
-        onClick={async () => {
-          await randomizeTeam();
-        }}
-      >
-        Randomize Teams
-      </button>
-      {allTeams.map((team, idx) => (
-        <Card key={idx} teamName={`Team ${idx + 1}`} teamNames={team} />
-      ))}
+    <div className="text-textlight">
+      <div className="bg-[#2d2e2f] py-12 px-16 mb-4 mt-8 mx-auto w-fit flex flex-col gap-6 rounded-lg">
+        <h2 className="text-textlight text-center"> Team Builder</h2>
+        <button
+          className="bg-[#6663A6] text-white flex mx-auto justify-center p-2 rounded"
+          onClick={async () => {
+            await randomizeTeam();
+          }}
+        >
+          Randomize Teams
+        </button>
+      </div>
+      <div className="flex flex-wrap items-center justify-center">
+        {allTeams.map((team, idx) => (
+          <Card key={idx} teamName={`Team ${idx + 1}`} teamNames={team} />
+        ))}
+      </div>
     </div>
   );
 }
@@ -130,11 +134,13 @@ export default Page;
 
 function Card(props: { teamName: string; teamNames: string[] | string }) {
   return (
-    <div className="bg-[#2D2E2F] text-textlight rounded-lg p-16 m-4 w-1/2 flex flex-col items-center justify-center">
+    <div className="bg-[#2D2E2F] text-textlight rounded-lg py-12 px-4 gap-4 m-4 w-64 flex flex-col items-center justify-center">
       <h3 className="text-textlight ">{props.teamName}</h3>
-      <p>{props.teamNames[0]}</p>
-      <p>{props.teamNames[1]}</p>
-      <p>{props.teamNames[2]}</p>
+      <div className="flex flex-col items-center justify-center">
+        <p>{props.teamNames[0]}</p>
+        <p>{props.teamNames[1]}</p>
+        <p>{props.teamNames[2]}</p>
+      </div>
     </div>
   );
 }
