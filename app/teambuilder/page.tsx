@@ -18,7 +18,7 @@ async function randomizeTeam() {
   const playerCopy = [...players];
   const teamSize = 3;
   const teamDoc: TeamsDoc = {
-    date: new Date().getUTCDate() as Day,
+    date: new Date().getDate() as Day,
     teams: [],
   };
   for (let i = 0; i < 3; i++) {
@@ -68,17 +68,17 @@ function Page() {
   useEffect(() => {
     async function fetchTeams() {
       const querySnapshot = await getDocs(collection(db, "teams"));
-      const teamsDocs: TeamsDoc[] = [];
+      let teamsDocs: TeamsDoc[] = [];
       querySnapshot.forEach((doc) => {
         teamsDocs.push(doc.data() as TeamsDoc);
       });
 
       // Get today's and previous day's date (as your Day type)
-      const todayDay = new Date().getUTCDate();
+      const todayDay = new Date().getDate();
       const prevDay = todayDay - 1;
 
       // Try to find today's teams, else previous day's
-      const selected: TeamsDoc | undefined =
+      let selected: TeamsDoc | undefined =
         teamsDocs.find((t) => t.date === todayDay) ||
         teamsDocs.find((t) => t.date === prevDay);
 
@@ -100,12 +100,12 @@ function Page() {
   return (
     <div className="text-textlight flex flex-col items-center justify-center min-h-screen">
       <button
-        className="bg-[#6663A6] text-white flex mx-auto justify-center w-32 h-32 mb-4 items-center rounded-full hover:opacity-80 transition duration-300 ease-in-out"
+        className="bg-[#6663A6] text-white flex mx-auto justify-center w-48 h-48 mb-4 items-center rounded-full hover:opacity-80 transition duration-300 ease-in-out"
         onClick={async () => {
           await randomizeTeam();
         }}
       >
-        RANDOMIZE
+        <h3 className="text-textlight">RANDOMIZE</h3>
       </button>
 
       <div className="flex flex-wrap items-center justify-center">
@@ -120,7 +120,7 @@ export default Page;
 
 function Card(props: { teamName: string; teamNames: string[] | string }) {
   return (
-    <div className="bg-[#2D2E2F] text-textlight rounded-lg py-8 px-2 m-4 w-64 flex flex-col items-center justify-center">
+    <div className="bg-[#2D2E2F] text-textlight rounded-lg py-8 px-2 m-4 w-64 flex flex-col items-center shadow-[0px_0px_50px_rgba(15,15,15,80%)] justify-center">
       <p className="text-textsecondary ">{props.teamName}</p>
       <div className="flex text-textlight flex-col items-center justify-center">
         <h3>{props.teamNames[0]}</h3>
