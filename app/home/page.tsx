@@ -1,10 +1,10 @@
 'use client'
 import { AuthProvider } from '@/context/AuthProvider'
 import { getAuth, onAuthStateChanged, User } from 'firebase/auth';
-import { collection, doc, getDoc, getDocs, query, where } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, onSnapshot, query, setDoc, updateDoc, where } from 'firebase/firestore';
 import React, { useEffect, useState } from 'react'
 import { db } from '../firebase';
-import { Team, UserInfo } from '@/lib/types';
+import { Challenge, Team, UserInfo } from '@/lib/types';
 
 function Home() {
   const [loading, setLoading] = useState(true);
@@ -14,7 +14,7 @@ function Home() {
   const [teamInfo, setTeamInfo] = useState<{
     points: number;
     names: string[];
-  }>();
+  }>({ points: 0, names: [] });
 
   useEffect(() => {
     getUser();
@@ -58,15 +58,22 @@ function Home() {
 
   async function getTeam() {
 
-    const currentDate = new Date().getUTCDate();
-    const docsSnap = await getDocs(query(collection(db, "teams"), where("date", '==', currentDate - 2))); /* This will be a single doc */ /* This also doesn't work if there isn't a teams doc already made for the given date */
-    docsSnap.forEach((doc) => {
+    const currentDate = new Date().getDate();
+    const docsSnap = await getDocs(query(collection(db, "teams"), where("date", '==', currentDate))); /* This finds nothing if there isn't a teams doc already made for the given date */
+    docsSnap.forEach((document) => { /* There will only be a single doc w the right date, so this only runs once */
       if (user) {
-        const teams: Team[] = doc.data().teams as Team[];
+        const teams: Team[] = document.data().teams as Team[];
         for (const i in teams) {
           for (const j in teams[i].uuids) {
             if (teams[i].uuids[j] === user.uid) {
-              setTeam(teams[i]);
+              setTeam(teams[i]); // Find the team that the current user is in
+
+              const unsub = onSnapshot(doc(db, "teams", document.id), (doc) => { // Get real-time data for the points of the current user's team
+                if (doc.exists()) {
+                  setTeamInfo(prev => ({ ...prev, points: doc.data().teams[i].points }))
+                }
+              })
+
               break;
             }
           }
@@ -85,10 +92,30 @@ function Home() {
           teamNames.push(data.name);
         }
       }
-      setTeamInfo({ points: team.points, names: teamNames });
+      setTeamInfo(prev => ({ ...prev, names: teamNames }));
 
     }
   }
+
+
+  // async function updateChallengeSchema() {
+  //   let challenge: Challenge | null = null;
+  //   const docSnaps = await getDocs(collection(db, "challenges"));
+  //   docSnaps.forEach((document) => {
+  //     challenge = document.data() as Challenge;
+  //     setDoc(doc(db, "challenges", document.id), {
+  //       author: challenge.author,
+  //       challenge: challenge.challenge,
+  //       challengeID: challenge.challengeID,
+  //       challengeType: challenge.challengeType,
+  //       completed: challenge.completed,
+  //       pointval: challenge.pointval,
+  //       proposedpointval: [],
+  //       playersCompleted: []
+  //     });
+  //   });
+  // }
+
 
   if (loading) {
     return (
@@ -105,13 +132,13 @@ function Home() {
   return (
     <AuthProvider>
       <div className='w-full min-h-[100vh] overflow-y-scroll'>
-        
+
         {/* Top part w the score */}
         <div className='fixed flex flex-col h-[35vh] w-full justify-center items-center -z-10'>
           <p className='text-textsecondary' style={{ fontFamily: "var(--font-dm-mono)" }}>
             your team has earned
           </p>
-          <h1 className='text-textlight font-medium'>{team?.points}</h1>
+          <h1 className='text-textlight font-medium'>{teamInfo?.points}</h1>
           <p className='text-textsecondary' style={{ fontFamily: "var(--font-dm-mono)" }}>
             points today
           </p>

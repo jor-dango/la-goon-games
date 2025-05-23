@@ -5,7 +5,8 @@ export type Challenge = {
   challengeType: "Negative" | "Daily" | "Normal" | null;
   completed: boolean;
   pointval: number;
-  assignedPlayer: string | null;
+  proposedpointval: {uuid: string, points: number}[];
+  playersCompleted: string[];
 };
 
 export type UserInfo = {
