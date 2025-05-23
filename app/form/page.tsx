@@ -85,11 +85,11 @@ function Form() {
     // console.log('Challenge being submitted: ', challengeInfo)
     try {
       setLoading(true);
-      await setDoc(doc(db, "testChallenges", challengeInfo.challengeID.toString()), {
+      await setDoc(doc(db, "challenges", challengeInfo.challengeID.toString()), {
         ...challengeInfo
       })
       await updateDoc(doc(db, "metadata", "counters"), {
-        numChallengesTest: challengeInfo.challengeID + 1
+        numChallenges: challengeInfo.challengeID + 1
       })
     }
     catch (error) {
@@ -105,7 +105,7 @@ function Form() {
 
   async function getChallenges() {
     const challenges: Challenge[] = [];
-    const docsSnap = await getDocs(query(collection(db, "testChallenges"), where("author", "==", userInfo?.name)));
+    const docsSnap = await getDocs(query(collection(db, "challenges"), where("author", "==", userInfo?.name)));
     docsSnap.forEach((doc) => {
       challenges.push(doc.data() as Challenge);
     })
