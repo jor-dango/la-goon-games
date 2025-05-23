@@ -136,18 +136,6 @@ function Home() {
     });
   }
 
-  const meow = { uuid: "XVQPNCALhXU6iPqIVb7mCOFX5ez1", points: 25 };
-  const ear = [meow];
-  async function addVoter() {
-    // let challenge: Challenge | null = null;
-    console.log("peow");
-    const docSnap = await getDoc(doc(db, "testChallenges", "1"));
-    const challenge = docSnap.data() as Challenge;
-    console.log(docSnap.data());
-    updateDoc(doc(db, "testChallenges", "2"), {
-      proposedpointval: [...challenge.proposedpointval, meow],
-    });
-  }
   async function parseTeamInfo() {
     if (team) {
       const teamNames: string[] = [];
@@ -161,7 +149,19 @@ function Home() {
       setTeamInfo((prev) => ({ ...prev, names: teamNames }));
     }
   }
-
+  
+  // const meow = { uuid: "XVQPNCALhXU6iPqIVb7mCOFX5ez1", points: 25 };
+  // const ear = [meow];
+  // async function addVoter() {
+  //   // let challenge: Challenge | null = null;
+  //   console.log("peow");
+  //   const docSnap = await getDoc(doc(db, "testChallenges", "1"));
+  //   const challenge = docSnap.data() as Challenge;
+  //   console.log(docSnap.data());
+  //   updateDoc(doc(db, "testChallenges", "2"), {
+  //     proposedpointval: [...challenge.proposedpointval, meow],
+  //   });
+  // }
   // async function updateChallengeSchema() {
   //   let challenge: Challenge | null = null;
   //   const docSnaps = await getDocs(collection(db, "testChallenges"));
@@ -226,15 +226,15 @@ function Home() {
           <button className='px-4 py-2 bg-accent rounded-lg w-full transition-colors hover:bg-buttonhover active:bg-buttonhover'>
             <small>Claim Challenge</small>
           </button>
-        ) : proposedPointVal.some((p) => p.uuid === user?.uid) ? (
+         : (challenge.proposedpointval && challenge.proposedpointval.some((p) => p.uuid === user?.uid)) ? 
           <button className="px-4 py-2 bg-bglight rounded-lg w-full transition-colors hover:bg-[#aaa] active:bg-[#aaa]">
             <small>Change your vote</small>
           </button>
-        ) : (
+         : 
           <button className="px-4 py-2 bg-bglight rounded-lg w-full transition-colors hover:bg-[#aaa] active:bg-[#aaa]">
             <small>Vote for point value</small>
           </button>
-        )}
+        }
       </div>
     );
   }
@@ -292,9 +292,7 @@ function Home() {
                 <ChallengeContainer
                   key={challenge.challengeID}
                   className="bg-bgmedium"
-                  challenge={challenge.challenge}
-                  pointVal={challenge.pointval}
-                  proposedPointVal={challenge.proposedpointval}
+                  challenge={challenge}
                 />
               ))}
             </div>
