@@ -80,7 +80,7 @@ function Page() {
   useEffect(() => {
     async function fetchTeams() {
       const querySnapshot = await getDocs(collection(db, "teams"));
-      let teamsDocs: TeamsDoc[] = [];
+      const teamsDocs: TeamsDoc[] = [];
       querySnapshot.forEach((doc) => {
         teamsDocs.push(doc.data() as TeamsDoc);
       });
@@ -90,7 +90,7 @@ function Page() {
       const prevDay = todayDay - 1;
 
       // Try to find today's teams, else previous day's
-      let selected: TeamsDoc | undefined =
+      const selected: TeamsDoc | undefined =
         teamsDocs.find((t) => t.date === todayDay) ||
         teamsDocs.find((t) => t.date === prevDay);
 

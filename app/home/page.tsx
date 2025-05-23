@@ -160,7 +160,7 @@ function Home() {
 
           <div className='pt-4 pb-3 bg-bgdark'>
             <p className='text-textlight font-semibold ml-4'>
-              Today's Challenges
+              Today&apos;s Challenges
             </p>
             <div className='flex flex-row px-4 py-2 gap-4 w-full overflow-x-scroll' style={{ scrollbarWidth: 'none' }}>
               <ChallengeContainer className='bg-bgmedium' />
