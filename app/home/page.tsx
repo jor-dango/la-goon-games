@@ -22,7 +22,6 @@ function Home() {
 
   useEffect(() => {
     getUser();
-    getChallenges();
   }, []);
   useEffect(() => {
     async function getInfo() {
@@ -42,7 +41,13 @@ function Home() {
       setLoading(false);
     }
     parseTeam();
-  }, [team])
+  }, [team]);
+
+  useEffect(() => {
+    if (numPlayers !== 0) {
+      getChallenges();
+    }
+  }, [numPlayers])
 
   async function getUser() {
     const auth = getAuth();
@@ -54,11 +59,20 @@ function Home() {
   async function getChallenges() {
     const unsub = onSnapshot(collection(db, "testChallenges"), (collection) => {
       const challenges: Challenge[] = [];
-      collection.forEach((doc) => {
-        challenges.push(doc.data() as Challenge);
-      })
+      collection.forEach((document) => {
+        const data = document.data() as Challenge;
+        if (data.proposedpointval && data.proposedpointval.length >= numPlayers && data.pointval === 0) { // Update the pointval once all players have voted on it
+          const medianIndex = Math.floor(data.proposedpointval.length / 2);
+          updateDoc(doc(db, "testChallenges", document.id), {
+            pointval: data.proposedpointval[medianIndex].points // Update pointval to the median of the proposed values
+          });
+        }
+        challenges.push(document.data() as Challenge);
+        console.log("challenges currently", challenges)
+      });
+
       setNormalChallenges(challenges.filter((challenge) =>
-        challenge.challengeType === 'Normal'
+        challenge.challengeType === "Normal"
       ));
       setDailyChallenges(challenges.filter((challenge) =>
         challenge.challengeType === "Daily"
@@ -66,7 +80,7 @@ function Home() {
       setNegativeChallenges(challenges.filter((challenge) =>
         challenge.challengeType === "Negative"
       ));
-    })
+    });
   }
 
   async function getUserInfo() {
@@ -124,33 +138,65 @@ function Home() {
 
   // async function updateChallengeSchema() {
   //   let challenge: Challenge | null = null;
-  //   const docSnaps = await getDocs(collection(db, "challenges"));
+  //   const docSnaps = await getDocs(collection(db, "testChallenges"));
   //   docSnaps.forEach((document) => {
   //     challenge = document.data() as Challenge;
-  //     setDoc(doc(db, "challenges", document.id), {
+  //     setDoc(doc(db, "testChallenges", document.id), {
   //       author: challenge.author,
   //       challenge: challenge.challenge,
   //       challengeID: challenge.challengeID,
   //       challengeType: challenge.challengeType,
   //       completed: challenge.completed,
-  //       pointval: challenge.pointval,
+  //       pointval: 0,
   //       proposedpointval: [],
   //       playersCompleted: []
   //     });
   //   });
   // }
 
-  function ChallengeContainer({ className, challenge, pointVal, proposedPointVal }: { className?: string, challenge: string, pointVal: number, proposedPointVal: { uuid: string, points: number }[] }) {
+  // const e = { uuid: "YacewnyggvNsvpQ0fh0pOJUNYGn1", points: 4 };
+  // const ear = [e, e, e, e, e, e, e];
+  // async function updateChallenge() {
+  //   // let challenge: Challenge | null = null;
+  //   console.log('peow')
+  //   const docSnap = await getDoc(doc(db, "testChallenges", "0"));
+  //   const challenge = docSnap.data() as Challenge;
+  //   console.log(docSnap.data())
+  //   updateDoc(doc(db, "testChallenges", "0"), {
+  //     author: challenge.author,
+  //     challenge: challenge.challenge,
+  //     challengeID: challenge.challengeID,
+  //     challengeType: challenge.challengeType,
+  //     completed: challenge.completed,
+  //     pointval: 0,
+  //     proposedpointval: [],
+  //     playersCompleted: []
+  //   });
+  // }
+
+  // async function addVoter() {
+  //   // let challenge: Challenge | null = null;
+  //   console.log('peow')
+  //   const docSnap = await getDoc(doc(db, "testChallenges", "0"));
+  //   const challenge = docSnap.data() as Challenge;
+  //   console.log(docSnap.data())
+  //   updateDoc(doc(db, "testChallenges", "0"), {
+
+  //     proposedpointval: [...challenge.proposedpointval, e]
+  //   });
+  // }
+
+  function ChallengeContainer({ className, challenge }: { className?: string, challenge: Challenge }) {
     return (
       <div className={'flex flex-col rounded-2xl bg-bgdark min-w-[70%] p-4 gap-4 ' + className}>
         <p className='text-textlight' style={{ lineHeight: 1.2, fontSize: ".875rem" }}>
-          {challenge}
+          {challenge.challenge}
         </p>
-        <div className='flex flex-1'/>
+        <div className='flex flex-1' />
         <p className='text-textlight' style={{ lineHeight: 1.2, fontSize: ".875rem" }}>
-          <strong>Points: {pointVal === 0 ? "Undecided" : pointVal}</strong>
+          <strong>Points: {challenge.pointval === 0 ? "Undecided" : challenge.pointval}</strong>
         </p>
-        {proposedPointVal.length === numPlayers ?
+        {challenge.proposedpointval && challenge.proposedpointval.length >= numPlayers ?
           <button className='px-4 py-2 bg-accent rounded-lg w-full transition-colors hover:bg-buttonhover active:bg-buttonhover'>
             <small>Claim Challenge</small>
           </button>
@@ -178,8 +224,11 @@ function Home() {
 
   return (
     <AuthProvider>
+      {/* <button onClick={() => console.log(normalChallenges[0]?.challenge)}>eowiqjeoqwij</button> */}
       <div className='w-full min-h-[100vh] overflow-y-scroll'>
 
+        {/* <button onClick={updateChallenge}>update challenge</button>
+        <button onClick={() => { addVoter(); console.log(numPlayers) }}>add voter</button> */}
         {/* Top part w the score */}
         <div className='fixed flex flex-col h-[35vh] w-full justify-center items-center -z-10'>
           <p className='text-textsecondary' style={{ fontFamily: "var(--font-dm-mono)" }}>
@@ -214,9 +263,7 @@ function Home() {
                 <ChallengeContainer
                   key={challenge.challengeID}
                   className='bg-bgmedium'
-                  challenge={challenge.challenge}
-                  pointVal={challenge.pointval}
-                  proposedPointVal={challenge.proposedpointval}
+                  challenge={challenge}
                 />
               )}
             </div>
@@ -230,9 +277,7 @@ function Home() {
               {dailyChallenges?.map((challenge) =>
                 <ChallengeContainer
                   key={challenge.challengeID}
-                  challenge={challenge.challenge}
-                  pointVal={challenge.pointval}
-                  proposedPointVal={challenge.proposedpointval}
+                  challenge={challenge}
                 />
               )}
             </div>
@@ -246,9 +291,7 @@ function Home() {
               {negativeChallenges?.map((challenge) =>
                 <ChallengeContainer
                   key={challenge.challengeID}
-                  challenge={challenge.challenge}
-                  pointVal={challenge.pointval}
-                  proposedPointVal={challenge.proposedpointval}
+                  challenge={challenge}
                 />
               )}
             </div>
