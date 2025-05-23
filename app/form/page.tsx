@@ -22,7 +22,8 @@ function Form() {
     challengeType: null,
     completed: false,
     pointval: 0,
-    assignedPlayer: null
+    proposedpointval: [],
+    playersCompleted: []
   });
 
   useEffect(() => {
