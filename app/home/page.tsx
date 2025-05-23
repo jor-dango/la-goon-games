@@ -10,14 +10,19 @@ function Home() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo>();
+  const [numPlayers, setNumPlayers] = useState(0);
   const [team, setTeam] = useState<Team>();
   const [teamInfo, setTeamInfo] = useState<{
     points: number;
     names: string[];
   }>({ points: 0, names: [] });
+  const [normalChallenges, setNormalChallenges] = useState<Challenge[]>();
+  const [dailyChallenges, setDailyChallenges] = useState<Challenge[]>();
+  const [negativeChallenges, setNegativeChallenges] = useState<Challenge[]>();
 
   useEffect(() => {
     getUser();
+    getChallenges();
   }, []);
   useEffect(() => {
     async function getInfo() {
@@ -46,6 +51,24 @@ function Home() {
     });
   }
 
+  async function getChallenges() {
+    const unsub = onSnapshot(collection(db, "testChallenges"), (collection) => {
+      const challenges: Challenge[] = [];
+      collection.forEach((doc) => {
+        challenges.push(doc.data() as Challenge);
+      })
+      setNormalChallenges(challenges.filter((challenge) =>
+        challenge.challengeType === 'Normal'
+      ));
+      setDailyChallenges(challenges.filter((challenge) =>
+        challenge.challengeType === "Daily"
+      ));
+      setNegativeChallenges(challenges.filter((challenge) =>
+        challenge.challengeType === "Negative"
+      ));
+    })
+  }
+
   async function getUserInfo() {
     if (user) {
       console.log("uid: ", user.uid)
@@ -57,6 +80,7 @@ function Home() {
   }
 
   async function getTeam() {
+    let numPlayers = 0;
 
     const currentDate = new Date().getDate();
     const docsSnap = await getDocs(query(collection(db, "teams"), where("date", '==', currentDate))); /* This finds nothing if there isn't a teams doc already made for the given date */
@@ -65,6 +89,7 @@ function Home() {
         const teams: Team[] = document.data().teams as Team[];
         for (const i in teams) {
           for (const j in teams[i].uuids) {
+            numPlayers++;
             if (teams[i].uuids[j] === user.uid) {
               setTeam(teams[i]); // Find the team that the current user is in
 
@@ -73,11 +98,10 @@ function Home() {
                   setTeamInfo(prev => ({ ...prev, points: doc.data().teams[i].points }))
                 }
               })
-
-              break;
             }
           }
         }
+        setNumPlayers(numPlayers); // numPlayers is set here bc number of players playing does not necessarily equal the number of registered players 
       }
     });
   }
@@ -115,6 +139,29 @@ function Home() {
   //     });
   //   });
   // }
+
+  function ChallengeContainer({ className, challenge, pointVal, proposedPointVal }: { className?: string, challenge: string, pointVal: number, proposedPointVal: { uuid: string, points: number }[] }) {
+    return (
+      <div className={'flex flex-col rounded-2xl bg-bgdark min-w-[70%] p-4 gap-4 ' + className}>
+        <p className='text-textlight' style={{ lineHeight: 1.2, fontSize: ".875rem" }}>
+          {challenge}
+        </p>
+        <div className='flex flex-1'/>
+        <p className='text-textlight' style={{ lineHeight: 1.2, fontSize: ".875rem" }}>
+          <strong>Points: {pointVal === 0 ? "Undecided" : pointVal}</strong>
+        </p>
+        {proposedPointVal.length === numPlayers ?
+          <button className='px-4 py-2 bg-accent rounded-lg w-full transition-colors hover:bg-buttonhover active:bg-buttonhover'>
+            <small>Claim Challenge</small>
+          </button>
+          :
+          <button className='px-4 py-2 bg-bglight rounded-lg w-full transition-colors hover:bg-[#aaa] active:bg-[#aaa]'>
+            <small>Vote for point value</small>
+          </button>
+        }
+      </div>
+    )
+  }
 
 
   if (loading) {
@@ -163,8 +210,15 @@ function Home() {
               Today&apos;s Challenges
             </p>
             <div className='flex flex-row px-4 py-2 gap-4 w-full overflow-x-scroll' style={{ scrollbarWidth: 'none' }}>
-              <ChallengeContainer className='bg-bgmedium' />
-              <ChallengeContainer className='bg-bgmedium' />
+              {normalChallenges?.map((challenge) =>
+                <ChallengeContainer
+                  key={challenge.challengeID}
+                  className='bg-bgmedium'
+                  challenge={challenge.challenge}
+                  pointVal={challenge.pointval}
+                  proposedPointVal={challenge.proposedpointval}
+                />
+              )}
             </div>
           </div>
 
@@ -173,8 +227,14 @@ function Home() {
               Daily Challenges
             </p>
             <div className='flex flex-row px-4 py-2 gap-4 w-full overflow-x-scroll' style={{ scrollbarWidth: 'none' }}>
-              <ChallengeContainer />
-              <ChallengeContainer />
+              {dailyChallenges?.map((challenge) =>
+                <ChallengeContainer
+                  key={challenge.challengeID}
+                  challenge={challenge.challenge}
+                  pointVal={challenge.pointval}
+                  proposedPointVal={challenge.proposedpointval}
+                />
+              )}
             </div>
           </div>
 
@@ -183,8 +243,14 @@ function Home() {
               Negative Challenges
             </p>
             <div className='flex flex-row px-4 py-2 gap-4 w-full overflow-x-scroll'>
-              <ChallengeContainer />
-              <ChallengeContainer />
+              {negativeChallenges?.map((challenge) =>
+                <ChallengeContainer
+                  key={challenge.challengeID}
+                  challenge={challenge.challenge}
+                  pointVal={challenge.pointval}
+                  proposedPointVal={challenge.proposedpointval}
+                />
+              )}
             </div>
           </div>
         </div>
@@ -195,21 +261,3 @@ function Home() {
 }
 
 export default Home
-
-
-
-function ChallengeContainer({ className }: { className?: string }) {
-  return (
-    <div className={'rounded-2xl bg-bgdark min-w-[70%] p-4 space-y-4 ' + className}>
-      <p className='text-textlight' style={{ lineHeight: 1.2, fontSize: ".875rem" }}>
-        Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam
-      </p>
-      <p className='text-textlight' style={{ lineHeight: 1.2, fontSize: ".875rem" }}>
-        <strong>Points: Undecided</strong>
-      </p>
-      <button className='px-4 py-2 bg-bglight rounded-lg w-full transition-colors hover:bg-[#aaa] active:bg-[#aaa]'>
-        <small>Vote for point value</small>
-      </button>
-    </div>
-  )
-}
