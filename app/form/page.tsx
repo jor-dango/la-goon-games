@@ -28,8 +28,8 @@ function Form() {
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "metadata", "counters"), (doc) => {
-      if (doc.exists() && doc.data() && "numChallengesTest" in doc.data()) {
-        setChallengeInfo(prevState => ({ ...prevState, challengeID: doc.data().numChallengesTest }))
+      if (doc.exists() && doc.data() && "numChallenges" in doc.data()) {
+        setChallengeInfo(prevState => ({ ...prevState, challengeID: doc.data().numChallenges }))
       }
     })
 
