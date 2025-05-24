@@ -15,6 +15,7 @@ import {
 import React, { useEffect, useState } from "react";
 import { db } from "../firebase";
 import { Challenge, Team, UserInfo, TeamsDoc } from "@/lib/types";
+import { Slider } from "@/components/ui/slider";
 
 function Home() {
   const [loading, setLoading] = useState(true);
@@ -32,8 +33,11 @@ function Home() {
   const [normalChallenges, setNormalChallenges] = useState<Challenge[]>();
   const [dailyChallenges, setDailyChallenges] = useState<Challenge[]>();
   const [negativeChallenges, setNegativeChallenges] = useState<Challenge[]>();
-  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(
+    null
+  );
   const [showModal, setShowModal] = useState<"claim" | "vote" | "">("");
+  const [sliderVal, setSliderVal] = useState<number[]>([20]);
 
   useEffect(() => {
     getUser();
@@ -81,43 +85,8 @@ function Home() {
     setPlayersMap(map);
   }
 
-  async function getChallenges() {
-    const unsub = onSnapshot(collection(db, "testChallenges"), (collection) => {
-      const challenges: Challenge[] = [];
-      collection.forEach((document) => {
-        const data = document.data() as Challenge;
-        if (data.proposedpointval) {
-          const medianIndex = Math.floor(data.proposedpointval.length / 2);
-
-          if (
-            medianIndex > 0 &&
-            data.proposedpointval[medianIndex].points &&
-            data.proposedpointval[medianIndex].points !== data.pointval
-          ) {
-            updateDoc(doc(db, "testChallenges", document.id), {
-              pointval: data.proposedpointval[medianIndex].points, // Update pointval to the median of the proposed values
-            });
-          }
-        }
-        challenges.push(document.data() as Challenge);
-        console.log("challenges currently", challenges);
-      });
-
-      setNormalChallenges(
-        challenges.filter((challenge) => challenge.challengeType === "Normal")
-      );
-      setDailyChallenges(
-        challenges.filter((challenge) => challenge.challengeType === "Daily")
-      );
-      setNegativeChallenges(
-        challenges.filter((challenge) => challenge.challengeType === "Negative")
-      );
-    });
-  }
-
   async function getUserInfo() {
     if (user) {
-      console.log("uid: ", user.uid);
       const docSnap = await getDoc(doc(db, "players", user.uid));
       if (docSnap.exists()) {
         setUserInfo(docSnap.data() as UserInfo);
@@ -132,7 +101,8 @@ function Home() {
     const docsSnap = await getDocs(
       query(collection(db, "teams"), where("date", "==", currentDate - 1))
     ); /* This finds nothing if there isn't a teams doc already made for the given date */
-    docsSnap.forEach((document) => { /* There will only be a single doc w the right date, so this only runs once */
+    docsSnap.forEach((document) => {
+      /* There will only be a single doc w the right date, so this only runs once */
       setTeamsDoc(document.data() as TeamsDoc);
 
       if (user) {
@@ -159,7 +129,61 @@ function Home() {
       }
     });
   }
+  // Separate function to update median points (call this when votes change)
+  async function updateChallengeMedian(challengeId: string, votes: any[]) {
+    if (!Array.isArray(votes) || votes.length === 0) return;
 
+    const sortedVotes = [...votes].sort((a, b) => a.points - b.points);
+    let medianPoints: number;
+    const mid = Math.floor(sortedVotes.length / 2);
+
+    if (sortedVotes.length % 2 === 0) {
+      medianPoints = Math.round(
+        (sortedVotes[mid - 1].points + sortedVotes[mid].points) / 2
+      );
+    } else {
+      medianPoints = sortedVotes[mid].points;
+    }
+
+    // Get current document to check if update is needed
+    const docSnap = await getDoc(doc(db, "testChallenges", challengeId));
+    if (docSnap.exists()) {
+      const currentData = docSnap.data() as Challenge;
+      if (currentData.pointval !== medianPoints) {
+        await updateDoc(doc(db, "testChallenges", challengeId), {
+          pointval: medianPoints,
+        });
+      }
+    }
+  }
+
+  // Clean listener function that only reads data
+  async function getChallenges() {
+    const unsub = onSnapshot(collection(db, "testChallenges"), (collection) => {
+      const challenges: Challenge[] = [];
+
+      collection.forEach((document) => {
+        const data = document.data() as Challenge;
+        challenges.push(data);
+      });
+
+      console.log("challenges currently", challenges);
+
+      setNormalChallenges(
+        challenges.filter((challenge) => challenge.challengeType === "Normal")
+      );
+      setDailyChallenges(
+        challenges.filter((challenge) => challenge.challengeType === "Daily")
+      );
+      setNegativeChallenges(
+        challenges.filter((challenge) => challenge.challengeType === "Negative")
+      );
+    });
+
+    return unsub;
+  }
+
+  // Call updateChallengeMedian only when votes are submitted, not in the listener
   async function parseTeamInfo() {
     if (team) {
       const teamNames: string[] = [];
@@ -264,18 +288,18 @@ function Home() {
           <strong>
             {/* If every user has submitted */}
             {challenge.proposedpointval &&
-              challenge.proposedpointval.length >= numPlayers
+            challenge.proposedpointval.length >= numPlayers
               ? "Final Points: " + challenge.pointval
               : // else if the user has submitted a point value
               challenge.proposedpointval &&
                 challenge.proposedpointval.some((p) => p.uuid === user?.uid)
-                ? "Projected Points: " + challenge.pointval
-                : // else (user has not submited a point value)
+              ? "Projected Points: " + challenge.pointval
+              : // else (user has not submited a point value)
                 "Projected Points: Hidden"}
           </strong>
         </p>
         {challenge.proposedpointval &&
-          challenge.proposedpointval.length >= numPlayers ? (
+        challenge.proposedpointval.length >= numPlayers ? (
           <button
             className="px-4 py-2 bg-accent rounded-lg w-full transition-colors hover:bg-buttonhover active:bg-buttonhover"
             onClick={() => {
@@ -401,13 +425,10 @@ function Home() {
             </div>
           </div>
         </div>
-
-
-
       </div>
 
       {/* CLaim Challenge Modal */}
-      {showModal === "claim" &&
+      {showModal === "claim" && (
         <div
           className="fixed top-0 bg-bgdark/90 w-full h-[100vh] z-10 flex items-center justify-center-safe"
           onClick={() => {
@@ -415,26 +436,89 @@ function Home() {
             setSelectedChallenge(null);
           }}
         >
-          <div className="bg-bgmedium max-w-[90%] p-8 rounded-2xl">
-
-          </div>
+          <div className="bg-bgmedium max-w-[90%] p-8 rounded-2xl"></div>
         </div>
-      }
+      )}
 
       {/* Vote on points Modal */}
-      {showModal === "vote" &&
+      {showModal === "vote" && (
         <div
           className="fixed top-0 bg-bgdark/90 w-full h-[100vh] z-10 flex items-center justify-center-safe"
           onClick={() => {
             setShowModal("");
             setSelectedChallenge(null);
+            setSliderVal([0]);
           }}
         >
-          <div className="bg-bgmedium max-w-[90%] p-8 rounded-2xl">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-bgmedium max-w-[90%] w-[400px] h-[200px] p-8 rounded-2xl"
+          >
+            <div className="flex flex-col items-center justify-center mx-auto">
+              <h2 className="text-textlight">{sliderVal}</h2>
+            </div>
+            <Slider
+              defaultValue={[0]}
+              max={100}
+              step={5}
+              min={0}
+              onValueChange={(value) => {
+                setSliderVal(value);
+              }}
+              className="z-10 w-full h-24"
+              onValueCommit={async (value) => {
+                if (selectedChallenge) {
+                  const proposedValue = {
+                    uuid: user?.uid || "",
+                    points: value[0],
+                  };
 
+                  // Check if user has already voted
+                  const existingVotes =
+                    selectedChallenge.proposedpointval || [];
+                  const userVoteIndex = existingVotes.findIndex(
+                    (vote) => vote.uuid === user?.uid
+                  );
+
+                  let updatedVotes;
+                  if (userVoteIndex !== -1) {
+                    // User has already voted, update their vote
+                    updatedVotes = [...existingVotes];
+                    updatedVotes[userVoteIndex] = proposedValue;
+                  } else {
+                    // User has not voted, add new vote
+                    updatedVotes = [...existingVotes, proposedValue];
+                  }
+
+                  try {
+                    // First update the votes
+                    await updateDoc(
+                      doc(
+                        db,
+                        "testChallenges",
+                        selectedChallenge.challengeID.toString()
+                      ),
+                      {
+                        proposedpointval: updatedVotes,
+                      }
+                    );
+
+                    // Then update the median - this is the key addition!
+                    await updateChallengeMedian(
+                      selectedChallenge.challengeID.toString(),
+                      updatedVotes
+                    );
+
+                    // Close modal
+                  } catch (error) {
+                    console.error("Error updating vote:", error);
+                  }
+                }
+              }}
+            />
           </div>
         </div>
-      }
+      )}
     </AuthProvider>
   );
 }
