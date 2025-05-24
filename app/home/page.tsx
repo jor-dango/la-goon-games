@@ -14,24 +14,30 @@ import {
 } from "firebase/firestore";
 import React, { useEffect, useState } from "react";
 import { db } from "../firebase";
-import { Challenge, Team, UserInfo } from "@/lib/types";
+import { Challenge, Team, UserInfo, TeamsDoc } from "@/lib/types";
 
 function Home() {
   const [loading, setLoading] = useState(true);
   const [user, setUser] = useState<User | null>(null);
   const [userInfo, setUserInfo] = useState<UserInfo>();
   const [numPlayers, setNumPlayers] = useState(0);
+  const [playersMap, setPlayersMap] = useState<Record<string, string>>({});
+  const [teamsDoc, setTeamsDoc] = useState<TeamsDoc>();
   const [team, setTeam] = useState<Team>();
   const [teamInfo, setTeamInfo] = useState<{
     points: number;
     names: string[];
   }>({ points: 0, names: [] });
+
   const [normalChallenges, setNormalChallenges] = useState<Challenge[]>();
   const [dailyChallenges, setDailyChallenges] = useState<Challenge[]>();
   const [negativeChallenges, setNegativeChallenges] = useState<Challenge[]>();
+  const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(null);
+  const [showModal, setShowModal] = useState<"claim" | "vote" | "">("");
 
   useEffect(() => {
     getUser();
+    getAllPlayers();
   }, []);
   useEffect(() => {
     async function getInfo() {
@@ -63,6 +69,16 @@ function Home() {
     onAuthStateChanged(auth, (user) => {
       setUser(user);
     });
+  }
+
+  async function getAllPlayers() {
+    const querySnapshot = await getDocs(collection(db, "players"));
+    const map: Record<string, string> = {};
+    querySnapshot.forEach((doc) => {
+      const data = doc.data() as UserInfo;
+      map[doc.id] = data.name;
+    });
+    setPlayersMap(map);
   }
 
   async function getChallenges() {
@@ -114,10 +130,11 @@ function Home() {
 
     const currentDate = new Date().getDate();
     const docsSnap = await getDocs(
-      query(collection(db, "teams"), where("date", "==", currentDate))
+      query(collection(db, "teams"), where("date", "==", currentDate - 1))
     ); /* This finds nothing if there isn't a teams doc already made for the given date */
-    docsSnap.forEach((document) => {
-      /* There will only be a single doc w the right date, so this only runs once */
+    docsSnap.forEach((document) => { /* There will only be a single doc w the right date, so this only runs once */
+      setTeamsDoc(document.data() as TeamsDoc);
+
       if (user) {
         const teams: Team[] = document.data().teams as Team[];
         for (const i in teams) {
@@ -247,28 +264,46 @@ function Home() {
           <strong>
             {/* If every user has submitted */}
             {challenge.proposedpointval &&
-            challenge.proposedpointval.length >= numPlayers
+              challenge.proposedpointval.length >= numPlayers
               ? "Final Points: " + challenge.pointval
               : // else if the user has submitted a point value
               challenge.proposedpointval &&
                 challenge.proposedpointval.some((p) => p.uuid === user?.uid)
-              ? "Projected Points: " + challenge.pointval
-              : // else (user has not submited a point value)
+                ? "Projected Points: " + challenge.pointval
+                : // else (user has not submited a point value)
                 "Projected Points: Hidden"}
           </strong>
         </p>
         {challenge.proposedpointval &&
-        challenge.proposedpointval.length >= numPlayers ? (
-          <button className="px-4 py-2 bg-accent rounded-lg w-full transition-colors hover:bg-buttonhover active:bg-buttonhover">
+          challenge.proposedpointval.length >= numPlayers ? (
+          <button
+            className="px-4 py-2 bg-accent rounded-lg w-full transition-colors hover:bg-buttonhover active:bg-buttonhover"
+            onClick={() => {
+              setSelectedChallenge(challenge);
+              setShowModal("claim");
+            }}
+          >
             <small>Claim Challenge</small>
           </button>
         ) : challenge.proposedpointval &&
           challenge.proposedpointval.some((p) => p.uuid === user?.uid) ? (
-          <button className="px-4 py-2 bg-bglight rounded-lg w-full transition-colors hover:bg-[#aaa] active:bg-[#aaa]">
+          <button
+            className="px-4 py-2 bg-bglight rounded-lg w-full transition-colors hover:bg-[#aaa] active:bg-[#aaa]"
+            onClick={() => {
+              setSelectedChallenge(challenge);
+              setShowModal("vote");
+            }}
+          >
             <small>Change your vote</small>
           </button>
         ) : (
-          <button className="px-4 py-2 bg-bglight rounded-lg w-full transition-colors hover:bg-[#aaa] active:bg-[#aaa]">
+          <button
+            className="px-4 py-2 bg-bglight rounded-lg w-full transition-colors hover:bg-[#aaa] active:bg-[#aaa]"
+            onClick={() => {
+              setSelectedChallenge(challenge);
+              setShowModal("vote");
+            }}
+          >
             <small>Vote for point value</small>
           </button>
         )}
@@ -366,7 +401,40 @@ function Home() {
             </div>
           </div>
         </div>
+
+
+
       </div>
+
+      {/* CLaim Challenge Modal */}
+      {showModal === "claim" &&
+        <div
+          className="fixed top-0 bg-bgdark/90 w-full h-[100vh] z-10 flex items-center justify-center-safe"
+          onClick={() => {
+            setShowModal("");
+            setSelectedChallenge(null);
+          }}
+        >
+          <div className="bg-bgmedium max-w-[90%] p-8 rounded-2xl">
+
+          </div>
+        </div>
+      }
+
+      {/* Vote on points Modal */}
+      {showModal === "vote" &&
+        <div
+          className="fixed top-0 bg-bgdark/90 w-full h-[100vh] z-10 flex items-center justify-center-safe"
+          onClick={() => {
+            setShowModal("");
+            setSelectedChallenge(null);
+          }}
+        >
+          <div className="bg-bgmedium max-w-[90%] p-8 rounded-2xl">
+
+          </div>
+        </div>
+      }
     </AuthProvider>
   );
 }
