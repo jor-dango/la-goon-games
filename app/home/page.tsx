@@ -56,7 +56,7 @@ function Home() {
     if (numPlayers !== 0) {
       getChallenges();
     }
-  }, [numPlayers])
+  }, [numPlayers]);
 
   async function getUser() {
     const auth = getAuth();
@@ -70,25 +70,32 @@ function Home() {
       const challenges: Challenge[] = [];
       collection.forEach((document) => {
         const data = document.data() as Challenge;
-        if (data.proposedpointval && data.proposedpointval.length >= numPlayers && data.pointval === 0) { // Update the pointval once all players have voted on it
+        if (data.proposedpointval) {
           const medianIndex = Math.floor(data.proposedpointval.length / 2);
-          updateDoc(doc(db, "testChallenges", document.id), {
-            pointval: data.proposedpointval[medianIndex].points // Update pointval to the median of the proposed values
-          });
+
+          if (
+            medianIndex > 0 &&
+            data.proposedpointval[medianIndex].points &&
+            data.proposedpointval[medianIndex].points !== data.pointval
+          ) {
+            updateDoc(doc(db, "testChallenges", document.id), {
+              pointval: data.proposedpointval[medianIndex].points, // Update pointval to the median of the proposed values
+            });
+          }
         }
         challenges.push(document.data() as Challenge);
-        console.log("challenges currently", challenges)
+        console.log("challenges currently", challenges);
       });
 
-      setNormalChallenges(challenges.filter((challenge) =>
-        challenge.challengeType === "Normal"
-      ));
-      setDailyChallenges(challenges.filter((challenge) =>
-        challenge.challengeType === "Daily"
-      ));
-      setNegativeChallenges(challenges.filter((challenge) =>
-        challenge.challengeType === "Negative"
-      ));
+      setNormalChallenges(
+        challenges.filter((challenge) => challenge.challengeType === "Normal")
+      );
+      setDailyChallenges(
+        challenges.filter((challenge) => challenge.challengeType === "Daily")
+      );
+      setNegativeChallenges(
+        challenges.filter((challenge) => challenge.challengeType === "Negative")
+      );
     });
   }
 
@@ -149,7 +156,7 @@ function Home() {
       setTeamInfo((prev) => ({ ...prev, names: teamNames }));
     }
   }
-  
+
   // const meow = { uuid: "XVQPNCALhXU6iPqIVb7mCOFX5ez1", points: 25 };
   // const ear = [meow];
   // async function addVoter() {
@@ -212,29 +219,59 @@ function Home() {
   //   });
   // }
 
-  function ChallengeContainer({ className, challenge }: { className?: string, challenge: Challenge }) {
+  function ChallengeContainer({
+    className,
+    challenge,
+  }: {
+    className?: string;
+    challenge: Challenge;
+  }) {
     return (
-      <div className={'flex flex-col rounded-2xl bg-bgdark min-w-[70%] p-4 gap-4 ' + className}>
-        <p className='text-textlight' style={{ lineHeight: 1.2, fontSize: ".875rem" }}>
+      <div
+        className={
+          "flex flex-col rounded-2xl bg-bgdark min-w-[70%] p-4 gap-4 " +
+          className
+        }
+      >
+        <p
+          className="text-textlight"
+          style={{ lineHeight: 1.2, fontSize: ".875rem" }}
+        >
           {challenge.challenge}
         </p>
-        <div className='flex flex-1' />
-        <p className='text-textlight' style={{ lineHeight: 1.2, fontSize: ".875rem" }}>
-          <strong>Points: {challenge.pointval === 0 ? "Undecided" : challenge.pointval}</strong>
+        <div className="flex flex-1" />
+        <p
+          className="text-textlight"
+          style={{ lineHeight: 1.2, fontSize: ".875rem" }}
+        >
+          <strong>
+            {/* If every user has submitted */}
+            {challenge.proposedpointval &&
+            challenge.proposedpointval.length >= numPlayers
+              ? "Final Points: " + challenge.pointval
+              : // else if the user has submitted a point value
+              challenge.proposedpointval &&
+                challenge.proposedpointval.some((p) => p.uuid === user?.uid)
+              ? "Projected Points: " + challenge.pointval
+              : // else (user has not submited a point value)
+                "Projected Points: Hidden"}
+          </strong>
         </p>
-        {challenge.proposedpointval && challenge.proposedpointval.length >= numPlayers ?
-          <button className='px-4 py-2 bg-accent rounded-lg w-full transition-colors hover:bg-buttonhover active:bg-buttonhover'>
+        {challenge.proposedpointval &&
+        challenge.proposedpointval.length >= numPlayers ? (
+          <button className="px-4 py-2 bg-accent rounded-lg w-full transition-colors hover:bg-buttonhover active:bg-buttonhover">
             <small>Claim Challenge</small>
           </button>
-         : (challenge.proposedpointval && challenge.proposedpointval.some((p) => p.uuid === user?.uid)) ? 
+        ) : challenge.proposedpointval &&
+          challenge.proposedpointval.some((p) => p.uuid === user?.uid) ? (
           <button className="px-4 py-2 bg-bglight rounded-lg w-full transition-colors hover:bg-[#aaa] active:bg-[#aaa]">
             <small>Change your vote</small>
           </button>
-         : 
+        ) : (
           <button className="px-4 py-2 bg-bglight rounded-lg w-full transition-colors hover:bg-[#aaa] active:bg-[#aaa]">
             <small>Vote for point value</small>
           </button>
-        }
+        )}
       </div>
     );
   }
