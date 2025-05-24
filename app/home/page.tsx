@@ -130,7 +130,7 @@ function Home() {
 
     const currentDate = new Date().getDate();
     const docsSnap = await getDocs(
-      query(collection(db, "teams"), where("date", "==", currentDate - 1))
+      query(collection(db, "teams"), where("date", "==", currentDate))
     ); /* This finds nothing if there isn't a teams doc already made for the given date */
     docsSnap.forEach((document) => { /* There will only be a single doc w the right date, so this only runs once */
       setTeamsDoc(document.data() as TeamsDoc);
@@ -171,6 +171,43 @@ function Home() {
         }
       }
       setTeamInfo((prev) => ({ ...prev, names: teamNames }));
+    }
+  }
+
+  async function claimChallenge(uuid: string) {
+    if (selectedChallenge) {
+      updateDoc(doc(db, "testChallenges", selectedChallenge.challengeID.toString()), {
+        playersCompleted: [...selectedChallenge.playersCompleted, uuid]
+      })
+
+      if (teamsDoc) {
+        let currentTeamsDoc = teamsDoc;
+        for (const i in currentTeamsDoc.teams) {
+          if (currentTeamsDoc.teams[i].uuids.some((id) => id === uuid)) {
+            currentTeamsDoc.teams[i].points += selectedChallenge.pointval;
+            break;
+          }
+        }
+        const currentDate = new Date().getDate();
+        const docsSnap = await getDocs(query(collection(db, "teams"), where("date", "==", currentDate)));
+        docsSnap.forEach((document) => {
+          updateDoc(doc(db, "teams", document.id), {
+            teams: currentTeamsDoc.teams
+          })
+        })
+      }
+      else {
+        alert("Your team could not be found. Please close the claim window and try again.");
+      }
+
+
+
+      alert(`Challenge claimed for ${playersMap[uuid]}!`)
+      setSelectedChallenge(null);
+      setShowModal("");
+    }
+    else {
+      alert("An error occurred. Please close the claim window and try again.");
     }
   }
 
@@ -415,8 +452,27 @@ function Home() {
             setSelectedChallenge(null);
           }}
         >
-          <div className="bg-bgmedium max-w-[90%] p-8 rounded-2xl">
-
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-bgmedium w-[90%] p-8 rounded-2xl space-y-4"
+          >
+            <p className="text-textlight mb-8">
+              <strong>Claim points for:</strong>
+            </p>
+            {Object.entries(playersMap).map(([uuid, name]) => (
+              <div key={uuid} className="flex justify-between gap-8">
+                <p className="text-textlight">
+                  {name}
+                </p>
+                <button
+                  className={`${selectedChallenge?.playersCompleted.some((person) => person === uuid) ? "bg-buttondisabled/60" : "bg-bglight hover:bg-accent active:bg-accent"} px-4 py-2 rounded-lg transition-colors`}
+                  onClick={() => claimChallenge(uuid)}
+                  disabled={selectedChallenge?.playersCompleted.some((person) => person === uuid)}
+                >
+                  {selectedChallenge?.playersCompleted.some((person) => person === uuid) ? "Claimed" : "Claim"}
+                </button>
+              </div>
+            ))}
           </div>
         </div>
       }
