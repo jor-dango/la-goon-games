@@ -20,7 +20,7 @@ function Form() {
     challenge: "",
     challengeID: -1,
     challengeType: null,
-    completed: false,
+    pulled: false,
     pointval: 0,
     proposedpointval: [],
     playersCompleted: []
