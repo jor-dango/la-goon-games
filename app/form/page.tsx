@@ -128,7 +128,7 @@ function Form() {
     const challenges: Challenge[] = [];
     const docsSnap = await getDocs(
       query(
-        collection(db, "challenges"),
+        collection(db, "challengeBank"),
         where("author", "==", userInfo?.name)
       )
     );
