@@ -84,11 +84,17 @@ function page() {
         setDoc(doc(db, "challenges", challenge.challengeID.toString()), {
           ...challenge
         });
+        updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
+          pulled: true
+        });
       })
       dailyChallenges.forEach((challenge) => {
         setDoc(doc(db, "challenges", challenge.challengeID.toString()), {
           ...challenge
-        })
+        });
+        updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
+          pulled: true
+        });
       })
     }
   }
