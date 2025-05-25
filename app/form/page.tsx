@@ -46,10 +46,10 @@ function Form() {
 
   useEffect(() => {
     const unsub = onSnapshot(doc(db, "metadata", "counters"), (doc) => {
-      if (doc.exists() && doc.data() && "numChallengesTest" in doc.data()) {
+      if (doc.exists() && doc.data() && "numChallenges" in doc.data()) {
         setChallengeInfo((prevState) => ({
           ...prevState,
-          challengeID: doc.data().numChallengesTest,
+          challengeID: doc.data().numChallenges,
         }));
       }
     });
@@ -109,13 +109,13 @@ function Form() {
     try {
       setLoading(true);
       await setDoc(
-        doc(db, "testChallenges", challengeInfo.challengeID.toString()),
+        doc(db, "challenges", challengeInfo.challengeID.toString()),
         {
           ...challengeInfo,
         }
       );
       await updateDoc(doc(db, "metadata", "counters"), {
-        numChallengesTest: challengeInfo.challengeID + 1,
+        numChallenges: challengeInfo.challengeID + 1,
       });
     } catch (error) {
       console.error(error);
@@ -131,7 +131,7 @@ function Form() {
     const challenges: Challenge[] = [];
     const docsSnap = await getDocs(
       query(
-        collection(db, "testChallenges"),
+        collection(db, "challenges"),
         where("author", "==", userInfo?.name)
       )
     );
@@ -146,7 +146,7 @@ function Form() {
     const newType = editTypes[challengeID];
     if (!newType) return;
     try {
-      await updateDoc(doc(db, "testChallenges", challengeID.toString()), {
+      await updateDoc(doc(db, "challenges", challengeID.toString()), {
         challengeType: newType,
       });
       window.alert("Challenge type updated!");

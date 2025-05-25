@@ -25,7 +25,7 @@ function page() {
 
   async function getChallengeBank() {
     
-    const unsub = onSnapshot(collection(db, "testChallenges"), (collection) => {
+    const unsub = onSnapshot(collection(db, "challengeBank"), (collection) => {
       const normalChallenges: Challenge[] = [];
       const dailyChallenges: Challenge[] = [];
       const negativeChallenges: Challenge[] = [];
@@ -77,7 +77,7 @@ function page() {
             ...challenge,
             pulled: true
           });
-          updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
+          updateDoc(doc(db, "challengeBank", challenge.challengeID.toString()), {
             pulled: true
           });
         }
@@ -93,7 +93,7 @@ function page() {
             ...challenge,
             pulled: true
           });
-          updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
+          updateDoc(doc(db, "challengeBank", challenge.challengeID.toString()), {
             pulled: true
           });
         }
@@ -115,8 +115,8 @@ function page() {
       for (let i = 0; i < numChallengesToPopulate; i++) { // Note that number of challenges may change
         const randIndex = Math.floor(nonPulledNormalChallenges.length * Math.random());
 
-        const randNormalChallenge = await getDoc(doc(db, "testChallenges", nonPulledNormalChallenges[randIndex].challengeID.toString()));
-        updateDoc(doc(db, "testChallenges", randNormalChallenge.id), {
+        const randNormalChallenge = await getDoc(doc(db, "challengeBank", nonPulledNormalChallenges[randIndex].challengeID.toString()));
+        updateDoc(doc(db, "challengeBank", randNormalChallenge.id), {
           pulled: true
         })
         setDoc(doc(db, "challenges", randNormalChallenge.id), {
@@ -137,10 +137,10 @@ function page() {
   // async function updateChallengeSchema() {
   //   let challenge: Challenge | null = null;
   //   const type = ["Normal", "Daily", "Negative"];
-  //   const docSnaps = await getDocs(collection(db, "testChallenges"));
+  //   const docSnaps = await getDocs(collection(db, "challengeBank"));
   //   docSnaps.forEach((document) => {
   //     challenge = document.data() as Challenge;
-  //     setDoc(doc(db, "testChallenges", document.id), {
+  //     setDoc(doc(db, "challengeBank", document.id), {
   //       author: challenge.author,
   //       challenge: challenge.challenge,
   //       challengeID: challenge.challengeID,
@@ -154,9 +154,9 @@ function page() {
   // }
 
   async function unpullAllChallenges() {
-    const docsSnap = await getDocs(collection(db, "testChallenges"));
+    const docsSnap = await getDocs(collection(db, "challengeBank"));
     docsSnap.forEach((document) => {
-      updateDoc(doc(db, "testChallenges", document.id), {
+      updateDoc(doc(db, "challengeBank", document.id), {
         pulled: false
       })
     })

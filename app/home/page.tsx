@@ -99,7 +99,7 @@ function Home() {
 
     const currentDate = new Date().getDate();
     const docsSnap = await getDocs(
-      query(collection(db, "teams"), where("date", "==", currentDate))
+      query(collection(db, "teams"), where("date", "==", currentDate - 1))
     ); /* This finds nothing if there isn't a teams doc already made for the given date */
     docsSnap.forEach((document) => {
       /* There will only be a single doc w the right date, so this only runs once */
@@ -146,11 +146,11 @@ function Home() {
     }
 
     // Get current document to check if update is needed
-    const docSnap = await getDoc(doc(db, "testChallenges", challengeId));
+    const docSnap = await getDoc(doc(db, "challenges", challengeId));
     if (docSnap.exists()) {
       const currentData = docSnap.data() as Challenge;
       if (currentData.pointval !== medianPoints) {
-        await updateDoc(doc(db, "testChallenges", challengeId), {
+        await updateDoc(doc(db, "challenges", challengeId), {
           pointval: medianPoints,
         });
       }
@@ -159,7 +159,7 @@ function Home() {
 
   // Clean listener function that only reads data
   async function getChallenges() {
-    const unsub = onSnapshot(collection(db, "testChallenges"), (collection) => {
+    const unsub = onSnapshot(collection(db, "challenges"), (collection) => {
       const challenges: Challenge[] = [];
 
       collection.forEach((document) => {
@@ -198,7 +198,7 @@ function Home() {
 
   async function claimChallenge(uuid: string) {
     if (selectedChallenge) {
-      updateDoc(doc(db, "testChallenges", selectedChallenge.challengeID.toString()), {
+      updateDoc(doc(db, "challenges", selectedChallenge.challengeID.toString()), {
         playersCompleted: [...selectedChallenge.playersCompleted, uuid]
       })
 
@@ -238,19 +238,19 @@ function Home() {
   // async function addVoter() {
   //   // let challenge: Challenge | null = null;
   //   console.log("peow");
-  //   const docSnap = await getDoc(doc(db, "testChallenges", "1"));
+  //   const docSnap = await getDoc(doc(db, "challenges", "1"));
   //   const challenge = docSnap.data() as Challenge;
   //   console.log(docSnap.data());
-  //   updateDoc(doc(db, "testChallenges", "2"), {
+  //   updateDoc(doc(db, "challenges", "2"), {
   //     proposedpointval: [...challenge.proposedpointval, meow],
   //   });
   // }
   // async function updateChallengeSchema() {
   //   let challenge: Challenge | null = null;
-  //   const docSnaps = await getDocs(collection(db, "testChallenges"));
+  //   const docSnaps = await getDocs(collection(db, "challenges"));
   //   docSnaps.forEach((document) => {
   //     challenge = document.data() as Challenge;
-  //     setDoc(doc(db, "testChallenges", document.id), {
+  //     setDoc(doc(db, "challenges", document.id), {
   //       author: challenge.author,
   //       challenge: challenge.challenge,
   //       challengeID: challenge.challengeID,
@@ -268,10 +268,10 @@ function Home() {
   // async function updateChallenge() {
   //   // let challenge: Challenge | null = null;
   //   console.log('peow')
-  //   const docSnap = await getDoc(doc(db, "testChallenges", "0"));
+  //   const docSnap = await getDoc(doc(db, "challenges", "0"));
   //   const challenge = docSnap.data() as Challenge;
   //   console.log(docSnap.data())
-  //   updateDoc(doc(db, "testChallenges", "0"), {
+  //   updateDoc(doc(db, "challenges", "0"), {
   //     author: challenge.author,
   //     challenge: challenge.challenge,
   //     challengeID: challenge.challengeID,
@@ -286,10 +286,10 @@ function Home() {
   // async function addVoter() {
   //   // let challenge: Challenge | null = null;
   //   console.log('peow')
-  //   const docSnap = await getDoc(doc(db, "testChallenges", "0"));
+  //   const docSnap = await getDoc(doc(db, "challenges", "0"));
   //   const challenge = docSnap.data() as Challenge;
   //   console.log(docSnap.data())
-  //   updateDoc(doc(db, "testChallenges", "0"), {
+  //   updateDoc(doc(db, "challenges", "0"), {
 
   //     proposedpointval: [...challenge.proposedpointval, e]
   //   });
@@ -551,7 +551,7 @@ function Home() {
                     await updateDoc(
                       doc(
                         db,
-                        "testChallenges",
+                        "challenges",
                         selectedChallenge.challengeID.toString()
                       ),
                       {
