@@ -3,7 +3,7 @@ export type Challenge = {
   challenge: string;
   challengeID: number;
   challengeType: "Negative" | "Daily" | "Normal" | null;
-  completed: boolean;
+  pulled: boolean;
   pointval: number;
   proposedpointval: {uuid: string, points: number}[];
   playersCompleted: string[];

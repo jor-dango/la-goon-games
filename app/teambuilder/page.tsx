@@ -1,17 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
-import {
-  addDoc,
-  collection,
-  getDocs,
-  query,
-  setDoc,
-  where,
-  getDoc,
-  doc,
-} from "firebase/firestore";
+import { addDoc, collection, getDocs } from "firebase/firestore";
 import { db } from "../firebase";
-import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import { Day, Team, TeamsDoc, UserInfo } from "@/lib/types";
 
 // query each player
@@ -28,7 +18,7 @@ async function randomizeTeam() {
   const playerCopy = [...players];
   const teamSize = 3;
   const teamDoc: TeamsDoc = {
-    date: new Date().getUTCDate() as Day,
+    date: new Date().getDate() as Day,
     teams: [],
   };
   for (let i = 0; i < 3; i++) {
@@ -57,8 +47,6 @@ async function randomizeTeam() {
 }
 
 function Page() {
-  const [user, setUser] = useState<User | null>(null);
-  const [userInfo, setUserInfo] = useState<UserInfo>();
   const [allTeams, setAllTeams] = useState<string[][]>([]);
   const [playersMap, setPlayersMap] = useState<Record<string, string>>({});
 
@@ -86,7 +74,7 @@ function Page() {
       });
 
       // Get today's and previous day's date (as your Day type)
-      const todayDay = new Date().getUTCDate();
+      const todayDay = new Date().getDate();
       const prevDay = todayDay - 1;
 
       // Try to find today's teams, else previous day's
@@ -110,18 +98,16 @@ function Page() {
   }, [playersMap]);
 
   return (
-    <div className="text-textlight">
-      <div className="bg-[#2d2e2f] py-12 px-16 mb-4 mt-8 mx-auto w-fit flex flex-col gap-6 rounded-lg">
-        <h2 className="text-textlight text-center"> Team Builder</h2>
-        <button
-          className="bg-[#6663A6] text-white flex mx-auto justify-center p-2 rounded"
-          onClick={async () => {
-            await randomizeTeam();
-          }}
-        >
-          Randomize Teams
-        </button>
-      </div>
+    <div className="text-textlight flex flex-col items-center justify-center min-h-screen">
+      <button
+        className="bg-[#6663A6] text-white flex mx-auto justify-center w-48 h-48 mb-4 items-center rounded-full hover:opacity-80 transition duration-300 ease-in-out"
+        onClick={async () => {
+          await randomizeTeam();
+        }}
+      >
+        <h3 className="text-textlight">RANDOMIZE</h3>
+      </button>
+
       <div className="flex flex-wrap items-center justify-center">
         {allTeams.map((team, idx) => (
           <Card key={idx} teamName={`Team ${idx + 1}`} teamNames={team} />
@@ -134,12 +120,12 @@ export default Page;
 
 function Card(props: { teamName: string; teamNames: string[] | string }) {
   return (
-    <div className="bg-[#2D2E2F] text-textlight rounded-lg py-12 px-4 gap-4 m-4 w-64 flex flex-col items-center justify-center">
-      <h3 className="text-textlight ">{props.teamName}</h3>
-      <div className="flex flex-col items-center justify-center">
-        <p>{props.teamNames[0]}</p>
-        <p>{props.teamNames[1]}</p>
-        <p>{props.teamNames[2]}</p>
+    <div className="bg-[#2D2E2F] text-textlight rounded-lg py-8 px-2 m-4 w-64 flex flex-col items-center shadow-[0px_0px_50px_rgba(15,15,15,80%)] justify-center">
+      <p className="text-textsecondary ">{props.teamName}</p>
+      <div className="flex text-textlight flex-col items-center justify-center">
+        <h3>{props.teamNames[0]}</h3>
+        <h3>{props.teamNames[1]}</h3>
+        <h3>{props.teamNames[2]}</h3>
       </div>
     </div>
   );
