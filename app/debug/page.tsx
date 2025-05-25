@@ -71,30 +71,36 @@ function page() {
       setCurrentDailyChallenges(challenges.filter((challenge) => challenge.challengeType === "Daily"));
       setCurrentNegativeChallenges(challenges.filter((challenge) => challenge.challengeType === "Negative"));
     });
-    // console.log()
-    // return unsub;
   }
 
-  async function populateDailyAndNegativeChallenges() {
-    console.log("eoiqwjio")
-    console.log("negative", negativeChallenges)
-    console.log("daily", dailyChallenges)
-    if (negativeChallenges && dailyChallenges) {
-      negativeChallenges.forEach((challenge) => {
-        setDoc(doc(db, "challenges", challenge.challengeID.toString()), {
-          ...challenge
-        });
-        updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
-          pulled: true
-        });
-      })
+  async function populateDailyChallenges() {
+    if (dailyChallenges) {
       dailyChallenges.forEach((challenge) => {
-        setDoc(doc(db, "challenges", challenge.challengeID.toString()), {
-          ...challenge
-        });
-        updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
-          pulled: true
-        });
+        if (!challenge.pulled) {
+          setDoc(doc(db, "challenges", challenge.challengeID.toString()), {
+            ...challenge,
+            pulled: true
+          });
+          updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
+            pulled: true
+          });
+        }
+      })
+    }
+  }
+
+  async function populateNegativeChallenges() {
+    if (negativeChallenges) {
+      negativeChallenges.forEach((challenge) => {
+        if (!challenge.pulled) {
+          setDoc(doc(db, "challenges", challenge.challengeID.toString()), {
+            ...challenge,
+            pulled: true
+          });
+          updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
+            pulled: true
+          });
+        }
       })
     }
   }
@@ -126,24 +132,24 @@ function page() {
     })
   }
 
-  async function updateChallengeSchema() {
-    let challenge: Challenge | null = null;
-    const type = ["Normal", "Daily", "Negative"];
-    const docSnaps = await getDocs(collection(db, "testChallenges"));
-    docSnaps.forEach((document) => {
-      challenge = document.data() as Challenge;
-      setDoc(doc(db, "testChallenges", document.id), {
-        author: challenge.author,
-        challenge: challenge.challenge,
-        challengeID: challenge.challengeID,
-        challengeType: type[Math.floor(Math.random() * 2.999)],
-        pulled: false,
-        pointval: challenge.pointval,
-        proposedpointval: challenge.proposedpointval,
-        playersCompleted: challenge.playersCompleted
-      });
-    });
-  }
+  // async function updateChallengeSchema() {
+  //   let challenge: Challenge | null = null;
+  //   const type = ["Normal", "Daily", "Negative"];
+  //   const docSnaps = await getDocs(collection(db, "testChallenges"));
+  //   docSnaps.forEach((document) => {
+  //     challenge = document.data() as Challenge;
+  //     setDoc(doc(db, "testChallenges", document.id), {
+  //       author: challenge.author,
+  //       challenge: challenge.challenge,
+  //       challengeID: challenge.challengeID,
+  //       challengeType: type[Math.floor(Math.random() * 2.999)],
+  //       pulled: false,
+  //       pointval: challenge.pointval,
+  //       proposedpointval: challenge.proposedpointval,
+  //       playersCompleted: challenge.playersCompleted
+  //     });
+  //   });
+  // }
 
   async function vetoChallenge() {
     if (selectedChallenge) {
@@ -187,7 +193,10 @@ function page() {
   return (
     <div className='flex flex-col items-center gap-4 py-8'>
       <button
-        onClick={populateDailyAndNegativeChallenges}
+        onClick={() => {
+          populateDailyChallenges();
+          populateNegativeChallenges();
+        }}
         className='px-4 py-2 bg-bglight rounded-lg w-fit'
       >
         Populate Daily/Negative Challenges
@@ -205,12 +214,12 @@ function page() {
         Delete current challenges (ie. "challenges" collection)
       </button>
 
-      <button
+      {/* <button
         onClick={updateChallengeSchema}
         className='px-4 py-2 bg-bglight rounded-lg w-fit'
       >
         Update schema
-      </button>
+      </button> */}
 
 
 
