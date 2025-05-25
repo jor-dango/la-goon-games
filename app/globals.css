@@ -22,7 +22,8 @@
   --color-destructive: #DB0000;
 
   --color-bglight: #F9FBF9;
-  --color-bgdark: #101211;
+  --color-bgdark: #212223;
+  --color-bgmedium: #2D2E2F;
   --color-border: #CBD5E1;
   --color-innercontainer: #F4F4F4;
 
@@ -33,26 +34,28 @@
   --color-buttonhover: #4DCC73;
   --color-buttondisabled: #DDDDDD;
 
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-sans: var(--font-dm-sans);
+  --font-mono: var(--font-dm-mono);
 }
 
-* {
-  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
-}
 
-h1 {
-  @apply text-5xl;
-}
-h2 {
-  @apply text-4xl font-bold;
-}
-h3 {
-  @apply text-2xl font-semibold;
-}
-small {
-  @apply text-sm font-medium;
-}
+
+  h1 {
+    @apply text-9xl;
+    font-family: var(--font-dm-mono); /* font families can't be applied w tailwind?? shrug */
+  }
+
+  h2 {
+    @apply text-4xl font-bold;
+  }
+
+  h3 {
+    @apply text-2xl font-semibold;
+  }
+
+  small {
+    @apply text-sm font-medium;
+  }
 
 /* Everything under this comment was added by ShadCN */
 @theme {
@@ -166,7 +169,9 @@ small {
   * {
     @apply border-border outline-ring/50;
   }
+
   body {
-    @apply bg-bgdark text-foreground;
+    @apply bg-bgdark text-textdark;
+    font-family: var(--font-dm-sans), Arial, Helvetica, sans-serif;
   }
 }
