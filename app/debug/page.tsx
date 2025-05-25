@@ -162,6 +162,15 @@ function page() {
     })
   }
 
+  async function duplicateChallenges() {
+    const docsSnap = await getDocs(collection(db, "challengeBank"));
+    docsSnap.forEach((document) => {
+      setDoc(doc(db, "duplicateChallengeBank", document.id), {
+        ...document.data()
+      })
+    }) 
+  }
+
   async function vetoChallenge() {
     if (selectedChallenge) {
       console.log("deleted challenge ", selectedChallenge.challengeID);
@@ -232,6 +241,13 @@ function page() {
         className='px-4 py-2 bg-bglight rounded-lg w-fit'
       >
         Unpull all challenges
+      </button>
+
+      <button
+        onClick={duplicateChallenges}
+        className='px-4 py-2 bg-bglight rounded-lg w-fit'
+      >
+        Duplicate all challenges
       </button>
 
 
