@@ -37,7 +37,7 @@ function Home() {
     null
   );
   const [showModal, setShowModal] = useState<"claim" | "vote" | "">("");
-  const [sliderVal, setSliderVal] = useState<number[]>([20]);
+  const [sliderVal, setSliderVal] = useState<number[]>([0]);
 
   useEffect(() => {
     getUser();
@@ -130,7 +130,7 @@ function Home() {
     });
   }
   // Separate function to update median points (call this when votes change)
-  async function updateChallengeMedian(challengeId: string, votes: any[]) {
+  async function updateChallengeMedian(challengeId: string, votes: {uuid: string, points: number}[]) {
     if (!Array.isArray(votes) || votes.length === 0) return;
 
     const sortedVotes = [...votes].sort((a, b) => a.points - b.points);
@@ -203,7 +203,7 @@ function Home() {
       })
 
       if (teamsDoc) {
-        let currentTeamsDoc = teamsDoc;
+        const currentTeamsDoc = teamsDoc;
         for (const i in currentTeamsDoc.teams) {
           if (currentTeamsDoc.teams[i].uuids.some((id) => id === uuid)) {
             currentTeamsDoc.teams[i].points += selectedChallenge.pointval;
