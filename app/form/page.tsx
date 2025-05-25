@@ -93,7 +93,7 @@ function Form() {
     // console.log('Challenge being submitted: ', challengeInfo)
     try {
       setLoading(true);
-      await setDoc(doc(db, "challenges", challengeInfo.challengeID.toString()), {
+      await setDoc(doc(db, "challengeBank", challengeInfo.challengeID.toString()), {
         ...challengeInfo
       })
       await updateDoc(doc(db, "metadata", "counters"), {
