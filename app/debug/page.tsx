@@ -6,7 +6,7 @@ import { Challenge } from '@/lib/types';
 
 const NUM_DAYS = 8;
 
-function page() {
+function Debug() {
   const [normalChallenges, setNormalChallenges] = useState<Challenge[]>();
   const [dailyChallenges, setDailyChallenges] = useState<Challenge[]>();
   const [negativeChallenges, setNegativeChallenges] = useState<Challenge[]>();
@@ -233,7 +233,7 @@ function page() {
         onClick={clearCurrentChallenges}
         className='px-4 py-2 bg-bglight rounded-lg w-fit'
       >
-        Delete current challenges (ie. "challenges" collection)
+        Delete current challenges (ie. challenges collection)
       </button>
 
       <button
@@ -333,4 +333,4 @@ function page() {
   )
 }
 
-export default page
+export default Debug
