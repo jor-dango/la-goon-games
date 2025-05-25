@@ -143,7 +143,7 @@ function Form() {
     const newType = editTypes[challengeID];
     if (!newType) return;
     try {
-      await updateDoc(doc(db, "challenges", challengeID.toString()), {
+      await updateDoc(doc(db, "challengeBank", challengeID.toString()), {
         challengeType: newType,
       });
       window.alert("Challenge type updated!");
