@@ -24,25 +24,21 @@ function page() {
   }, [])
 
   async function getChallengeBank() {
-    const normalChallenges: Challenge[] = [];
-    const dailyChallenges: Challenge[] = [];
-    const negativeChallenges: Challenge[] = [];
-
+    
     const unsub = onSnapshot(collection(db, "testChallenges"), (collection) => {
+      const normalChallenges: Challenge[] = [];
+      const dailyChallenges: Challenge[] = [];
+      const negativeChallenges: Challenge[] = [];
       collection.forEach((document) => {
         const data = document.data() as Challenge;
-        console.log(data)
         if (data.challengeType === "Normal") {
           normalChallenges.push(data);
-          console.log(data)
         }
         else if (data.challengeType === "Daily") {
           dailyChallenges.push(data);
-          console.log(data)
         }
         else if (data.challengeType === "Negative") {
           negativeChallenges.push(data);
-          console.log(data)
         }
         // console.log(data);
       })
@@ -108,11 +104,17 @@ function page() {
   async function populateNormalChallenges(numMoreChallenges?: number) {
     if (normalChallenges) {
       const nonPulledNormalChallenges = normalChallenges.filter((challenge) => challenge.pulled === false);
-      const numChallengesToPopulate = numMoreChallenges ?? Math.floor(numChallenges / (NUM_DAYS + 2));
+      console.log(nonPulledNormalChallenges)
+      if (nonPulledNormalChallenges.length === 0) {
+        return;
+      }
 
-      for (let i = 0; i < 2; i++) { // Note that number of challenges may change
+      const numChallengesToPopulate = numMoreChallenges || Math.floor(numChallenges / (NUM_DAYS + 2)) || 1; // ie. 1 is assigned if the second condition = 0 (which is falsy)
+      console.log("num challenges", numChallenges);
+      console.log("num challenges to pop", numChallengesToPopulate);
+      for (let i = 0; i < numChallengesToPopulate; i++) { // Note that number of challenges may change
         const randIndex = Math.floor(nonPulledNormalChallenges.length * Math.random());
-        console.log(randIndex)
+
         const randNormalChallenge = await getDoc(doc(db, "testChallenges", nonPulledNormalChallenges[randIndex].challengeID.toString()));
         updateDoc(doc(db, "testChallenges", randNormalChallenge.id), {
           pulled: true
@@ -151,6 +153,15 @@ function page() {
   //   });
   // }
 
+  async function unpullAllChallenges() {
+    const docsSnap = await getDocs(collection(db, "testChallenges"));
+    docsSnap.forEach((document) => {
+      updateDoc(doc(db, "testChallenges", document.id), {
+        pulled: false
+      })
+    })
+  }
+
   async function vetoChallenge() {
     if (selectedChallenge) {
       console.log("deleted challenge ", selectedChallenge.challengeID);
@@ -158,6 +169,8 @@ function page() {
       if (selectedChallenge.challengeType === "Normal") {
         populateNormalChallenges(1);
       }
+      setSelectedChallenge(null);
+      setShowModal(false);
     }
   }
 
@@ -214,12 +227,12 @@ function page() {
         Delete current challenges (ie. "challenges" collection)
       </button>
 
-      {/* <button
-        onClick={updateChallengeSchema}
+      <button
+        onClick={unpullAllChallenges}
         className='px-4 py-2 bg-bglight rounded-lg w-fit'
       >
-        Update schema
-      </button> */}
+        Unpull all challenges
+      </button>
 
 
 
