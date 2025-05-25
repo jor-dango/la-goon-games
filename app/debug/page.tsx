@@ -24,25 +24,21 @@ function page() {
   }, [])
 
   async function getChallengeBank() {
-    const normalChallenges: Challenge[] = [];
-    const dailyChallenges: Challenge[] = [];
-    const negativeChallenges: Challenge[] = [];
-
+    
     const unsub = onSnapshot(collection(db, "testChallenges"), (collection) => {
+      const normalChallenges: Challenge[] = [];
+      const dailyChallenges: Challenge[] = [];
+      const negativeChallenges: Challenge[] = [];
       collection.forEach((document) => {
         const data = document.data() as Challenge;
-        console.log(data)
         if (data.challengeType === "Normal") {
           normalChallenges.push(data);
-          console.log(data)
         }
         else if (data.challengeType === "Daily") {
           dailyChallenges.push(data);
-          console.log(data)
         }
         else if (data.challengeType === "Negative") {
           negativeChallenges.push(data);
-          console.log(data)
         }
         // console.log(data);
       })
@@ -71,30 +67,36 @@ function page() {
       setCurrentDailyChallenges(challenges.filter((challenge) => challenge.challengeType === "Daily"));
       setCurrentNegativeChallenges(challenges.filter((challenge) => challenge.challengeType === "Negative"));
     });
-    // console.log()
-    // return unsub;
   }
 
-  async function populateDailyAndNegativeChallenges() {
-    console.log("eoiqwjio")
-    console.log("negative", negativeChallenges)
-    console.log("daily", dailyChallenges)
-    if (negativeChallenges && dailyChallenges) {
-      negativeChallenges.forEach((challenge) => {
-        setDoc(doc(db, "challenges", challenge.challengeID.toString()), {
-          ...challenge
-        });
-        updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
-          pulled: true
-        });
-      })
+  async function populateDailyChallenges() {
+    if (dailyChallenges) {
       dailyChallenges.forEach((challenge) => {
-        setDoc(doc(db, "challenges", challenge.challengeID.toString()), {
-          ...challenge
-        });
-        updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
-          pulled: true
-        });
+        if (!challenge.pulled) {
+          setDoc(doc(db, "challenges", challenge.challengeID.toString()), {
+            ...challenge,
+            pulled: true
+          });
+          updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
+            pulled: true
+          });
+        }
+      })
+    }
+  }
+
+  async function populateNegativeChallenges() {
+    if (negativeChallenges) {
+      negativeChallenges.forEach((challenge) => {
+        if (!challenge.pulled) {
+          setDoc(doc(db, "challenges", challenge.challengeID.toString()), {
+            ...challenge,
+            pulled: true
+          });
+          updateDoc(doc(db, "testChallenges", challenge.challengeID.toString()), {
+            pulled: true
+          });
+        }
       })
     }
   }
@@ -102,11 +104,17 @@ function page() {
   async function populateNormalChallenges(numMoreChallenges?: number) {
     if (normalChallenges) {
       const nonPulledNormalChallenges = normalChallenges.filter((challenge) => challenge.pulled === false);
-      const numChallengesToPopulate = numMoreChallenges ?? Math.floor(numChallenges / (NUM_DAYS + 2));
+      console.log(nonPulledNormalChallenges)
+      if (nonPulledNormalChallenges.length === 0) {
+        return;
+      }
 
-      for (let i = 0; i < 2; i++) { // Note that number of challenges may change
+      const numChallengesToPopulate = numMoreChallenges || Math.floor(numChallenges / (NUM_DAYS + 2)) || 1; // ie. 1 is assigned if the second condition = 0 (which is falsy)
+      console.log("num challenges", numChallenges);
+      console.log("num challenges to pop", numChallengesToPopulate);
+      for (let i = 0; i < numChallengesToPopulate; i++) { // Note that number of challenges may change
         const randIndex = Math.floor(nonPulledNormalChallenges.length * Math.random());
-        console.log(randIndex)
+
         const randNormalChallenge = await getDoc(doc(db, "testChallenges", nonPulledNormalChallenges[randIndex].challengeID.toString()));
         updateDoc(doc(db, "testChallenges", randNormalChallenge.id), {
           pulled: true
@@ -126,23 +134,32 @@ function page() {
     })
   }
 
-  async function updateChallengeSchema() {
-    let challenge: Challenge | null = null;
-    const type = ["Normal", "Daily", "Negative"];
-    const docSnaps = await getDocs(collection(db, "testChallenges"));
-    docSnaps.forEach((document) => {
-      challenge = document.data() as Challenge;
-      setDoc(doc(db, "testChallenges", document.id), {
-        author: challenge.author,
-        challenge: challenge.challenge,
-        challengeID: challenge.challengeID,
-        challengeType: type[Math.floor(Math.random() * 2.999)],
-        pulled: false,
-        pointval: challenge.pointval,
-        proposedpointval: challenge.proposedpointval,
-        playersCompleted: challenge.playersCompleted
-      });
-    });
+  // async function updateChallengeSchema() {
+  //   let challenge: Challenge | null = null;
+  //   const type = ["Normal", "Daily", "Negative"];
+  //   const docSnaps = await getDocs(collection(db, "testChallenges"));
+  //   docSnaps.forEach((document) => {
+  //     challenge = document.data() as Challenge;
+  //     setDoc(doc(db, "testChallenges", document.id), {
+  //       author: challenge.author,
+  //       challenge: challenge.challenge,
+  //       challengeID: challenge.challengeID,
+  //       challengeType: type[Math.floor(Math.random() * 2.999)],
+  //       pulled: false,
+  //       pointval: challenge.pointval,
+  //       proposedpointval: challenge.proposedpointval,
+  //       playersCompleted: challenge.playersCompleted
+  //     });
+  //   });
+  // }
+
+  async function unpullAllChallenges() {
+    const docsSnap = await getDocs(collection(db, "testChallenges"));
+    docsSnap.forEach((document) => {
+      updateDoc(doc(db, "testChallenges", document.id), {
+        pulled: false
+      })
+    })
   }
 
   async function vetoChallenge() {
@@ -152,6 +169,8 @@ function page() {
       if (selectedChallenge.challengeType === "Normal") {
         populateNormalChallenges(1);
       }
+      setSelectedChallenge(null);
+      setShowModal(false);
     }
   }
 
@@ -187,7 +206,10 @@ function page() {
   return (
     <div className='flex flex-col items-center gap-4 py-8'>
       <button
-        onClick={populateDailyAndNegativeChallenges}
+        onClick={() => {
+          populateDailyChallenges();
+          populateNegativeChallenges();
+        }}
         className='px-4 py-2 bg-bglight rounded-lg w-fit'
       >
         Populate Daily/Negative Challenges
@@ -206,10 +228,10 @@ function page() {
       </button>
 
       <button
-        onClick={updateChallengeSchema}
+        onClick={unpullAllChallenges}
         className='px-4 py-2 bg-bglight rounded-lg w-fit'
       >
-        Update schema
+        Unpull all challenges
       </button>
 
 

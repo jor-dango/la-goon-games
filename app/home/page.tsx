@@ -179,8 +179,6 @@ function Home() {
         challenges.filter((challenge) => challenge.challengeType === "Negative")
       );
     });
-
-    return unsub;
   }
 
   // Call updateChallengeMedian only when votes are submitted, not in the listener
