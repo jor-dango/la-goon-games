@@ -99,7 +99,7 @@ function Home() {
 
     const currentDate = new Date().getDate();
     const docsSnap = await getDocs(
-      query(collection(db, "teams"), where("date", "==", currentDate - 1))
+      query(collection(db, "teams"), where("date", "==", currentDate))
     ); /* This finds nothing if there isn't a teams doc already made for the given date */
     docsSnap.forEach((document) => {
       /* There will only be a single doc w the right date, so this only runs once */
