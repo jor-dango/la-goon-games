@@ -4,10 +4,12 @@ import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import {
   collection,
   doc,
+  DocumentData,
   getDoc,
   getDocs,
   onSnapshot,
   query,
+  QueryDocumentSnapshot,
   setDoc,
   updateDoc,
   where,
@@ -23,7 +25,10 @@ function Home() {
   const [userInfo, setUserInfo] = useState<UserInfo>();
   const [numPlayers, setNumPlayers] = useState(0);
   const [playersMap, setPlayersMap] = useState<Record<string, string>>({});
+
+  const [teamsSnapshot, setTeamsSnapshot] = useState<QueryDocumentSnapshot<DocumentData, DocumentData>>(); // This is used purely 
   const [teamsDoc, setTeamsDoc] = useState<TeamsDoc>();
+
   const [team, setTeam] = useState<Team>();
   const [teamInfo, setTeamInfo] = useState<{
     points: number;
@@ -99,11 +104,11 @@ function Home() {
 
     const currentDate = new Date().getDate();
     const docsSnap = await getDocs(
-      query(collection(db, "teams"), where("date", "==", currentDate))
+      query(collection(db, "teams"), where("date", "==", currentDate - 1))
     ); /* This finds nothing if there isn't a teams doc already made for the given date */
-    docsSnap.forEach((document) => {
-      /* There will only be a single doc w the right date, so this only runs once */
+    docsSnap.forEach((document) => { /* There will only be a single doc w the right date, so this only runs once */
       setTeamsDoc(document.data() as TeamsDoc);
+      setTeamsSnapshot(document);
 
       if (user) {
         const teams: Team[] = document.data().teams as Team[];
@@ -130,7 +135,7 @@ function Home() {
     });
   }
   // Separate function to update median points (call this when votes change)
-  async function updateChallengeMedian(challengeId: string, votes: {uuid: string, points: number}[]) {
+  async function updateChallengeMedian(challengeId: string, votes: { uuid: string, points: number }[]) {
     if (!Array.isArray(votes) || votes.length === 0) return;
 
     const sortedVotes = [...votes].sort((a, b) => a.points - b.points);
@@ -202,21 +207,22 @@ function Home() {
         playersCompleted: [...selectedChallenge.playersCompleted, uuid]
       })
 
-      if (teamsDoc) {
-        const currentTeamsDoc = teamsDoc;
-        for (const i in currentTeamsDoc.teams) {
-          if (currentTeamsDoc.teams[i].uuids.some((id) => id === uuid)) {
-            currentTeamsDoc.teams[i].points += selectedChallenge.pointval;
+      if (teamsSnapshot && teamsDoc) {
+        const docsSnap = await getDoc(doc(db, "teams", teamsSnapshot.id));
+        const data = docsSnap.data() as TeamsDoc;
+
+        console.log("before", data);
+        for (const i in data.teams) {
+          if (data.teams[i].uuids.some((id) => id === uuid)) {
+            data.teams[i].points += selectedChallenge.pointval;
             break;
           }
         }
-        const currentDate = new Date().getDate();
-        const docsSnap = await getDocs(query(collection(db, "teams"), where("date", "==", currentDate)));
-        docsSnap.forEach((document) => {
-          updateDoc(doc(db, "teams", document.id), {
-            teams: currentTeamsDoc.teams
-          })
-        })
+
+        console.log("after", data);
+        // updateDoc(doc(db, "teams", teamsSnapshot.id), {
+        //   teams: data.teams
+        // });
       }
       else {
         alert("Your team could not be found. Please close the claim window and try again.");
@@ -323,18 +329,18 @@ function Home() {
           <strong>
             {/* If every user has submitted */}
             {challenge.proposedpointval &&
-            challenge.proposedpointval.length >= numPlayers
+              challenge.proposedpointval.length >= numPlayers
               ? "Final Points: " + challenge.pointval
               : // else if the user has submitted a point value
               challenge.proposedpointval &&
                 challenge.proposedpointval.some((p) => p.uuid === user?.uid)
-              ? "Projected Points: " + challenge.pointval
-              : // else (user has not submited a point value)
+                ? "Projected Points: " + challenge.pointval
+                : // else (user has not submited a point value)
                 "Projected Points: Hidden"}
           </strong>
         </p>
         {challenge.proposedpointval &&
-        challenge.proposedpointval.length >= numPlayers ? (
+          challenge.proposedpointval.length >= numPlayers ? (
           <button
             className="px-4 py-2 bg-accent rounded-lg w-full transition-colors hover:bg-buttonhover active:bg-buttonhover"
             onClick={() => {
