@@ -4,10 +4,12 @@ import { getAuth, onAuthStateChanged, User } from "firebase/auth";
 import {
   collection,
   doc,
+  DocumentData,
   getDoc,
   getDocs,
   onSnapshot,
   query,
+  QueryDocumentSnapshot,
   setDoc,
   updateDoc,
   where,
@@ -252,6 +254,32 @@ function Home() {
     }
   }
 
+  async function updatePlayerPoints() {
+    let players: QueryDocumentSnapshot<DocumentData, DocumentData>[] = [];
+    const docsSnap = await getDocs(collection(db, "players"));
+    docsSnap.forEach((document) => {
+      players.push(document);
+    });
+
+    if (teamsDoc) {
+      for (const i in teamsDoc.teams) {
+        const pointVal = teamsDoc.teams[i].points;
+        for (const j in teamsDoc.teams[i].uuids) {
+          const uuidToUpdate = teamsDoc.teams[i].uuids[j];
+          // const key = (Object.keys(playersMap) as Array<string>).find(key => playersMap[key] === teamsDoc.teams[i].uuids[j]);
+          const player = players.find(player => player.id === uuidToUpdate);
+          const playerData = player?.data() as UserInfo;
+          updateDoc(doc(db, "players", uuidToUpdate), {
+            points: playerData.points + pointVal
+          })
+        }
+        
+      }
+    }  
+
+
+  }
+
   // const meow = { uuid: "XVQPNCALhXU6iPqIVb7mCOFX5ez1", points: 25 };
   // const ear = [meow];
   // async function addVoter() {
@@ -401,6 +429,12 @@ function Home() {
 
   return (
     <AuthProvider>
+      <button
+      onClick={updatePlayerPoints}
+      className="fixed"
+      >
+        Update Player Points
+      </button>
       <div className="w-full min-h-[100vh] overflow-y-scroll">
         {/* Top part w the score */}
 
