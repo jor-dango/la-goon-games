@@ -109,7 +109,7 @@ function Debug() {
         return;
       }
 
-      const numChallengesToPopulate = numMoreChallenges || Math.floor(numChallenges / (NUM_DAYS + 2)) || 1; // ie. 1 is assigned if the second condition = 0 (which is falsy)
+      const numChallengesToPopulate = numMoreChallenges || Math.floor(numChallenges / (NUM_DAYS + 1)) || 1; // ie. 1 is assigned if the second condition = 0 (which is falsy)
       console.log("num challenges", numChallenges);
       console.log("num challenges to pop", numChallengesToPopulate);
       for (let i = 0; i < numChallengesToPopulate; i++) { // Note that number of challenges may change
@@ -163,9 +163,9 @@ function Debug() {
   }
 
   async function duplicateChallenges() {
-    const docsSnap = await getDocs(collection(db, "challengeBank"));
+    const docsSnap = await getDocs(collection(db, "challenges"));
     docsSnap.forEach((document) => {
-      setDoc(doc(db, "duplicateChallengeBank", document.id), {
+      setDoc(doc(db, "challenges-5-28", document.id), {
         ...document.data()
       })
     }) 
@@ -181,6 +181,15 @@ function Debug() {
       setSelectedChallenge(null);
       setShowModal(false);
     }
+  }
+
+  async function clearPlayersCompleted() {
+        const docsSnap = await getDocs(collection(db, "challenges"));
+    docsSnap.forEach((document) => {
+      updateDoc(doc(db, "challenges", document.id), {
+        playersCompleted: []
+      })
+    })
   }
 
   function ChallengeContainer({
@@ -244,10 +253,17 @@ function Debug() {
       </button>
 
       <button
+        onClick={clearPlayersCompleted}
+        className='px-4 py-2 bg-bglight rounded-lg w-fit'
+      >
+        Clear Players Completed
+      </button>
+
+      <button
         onClick={duplicateChallenges}
         className='px-4 py-2 bg-bglight rounded-lg w-fit'
       >
-        Duplicate all challenges
+        Duplicate Challenges
       </button>
 
 
