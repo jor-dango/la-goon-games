@@ -12,7 +12,7 @@ import {
   updateDoc,
   where,
 } from "firebase/firestore";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { db } from "../firebase";
 import { Challenge, Team, UserInfo, TeamsDoc } from "@/lib/types";
 import { Slider } from "@/components/ui/slider";
@@ -36,13 +36,22 @@ function Home() {
   const [selectedChallenge, setSelectedChallenge] = useState<Challenge | null>(
     null
   );
-  const [showModal, setShowModal] = useState<"claim" | "vote" | "">("");
+  const [showModal, setShowModal] = useState<"claim" | "vote" | "date" | "">(
+    ""
+  );
   const [sliderVal, setSliderVal] = useState<number[]>([0]);
+  const [currentDate, setCurrentDate] = useState<number[]>([1]);
+  const [sliderDate, setSliderDate] = useState<number[]>([1]);
+  const bb = useRef(false);
 
   useEffect(() => {
-    getUser();
-    getAllPlayers();
-  }, []);
+    if (bb.current) {
+      getUser();
+      getAllPlayers();
+      console.log("bb ran");
+      console.log("currentDate", currentDate);
+    }
+  }, [bb.current]);
   useEffect(() => {
     async function getInfo() {
       try {
@@ -97,9 +106,8 @@ function Home() {
   async function getTeam() {
     let numPlayers = 0;
 
-    const currentDate = new Date().getDate();
     const docsSnap = await getDocs(
-      query(collection(db, "teams"), where("date", "==", currentDate))
+      query(collection(db, "teams"), where("date", "==", currentDate[0]))
     ); /* This finds nothing if there isn't a teams doc already made for the given date */
     docsSnap.forEach((document) => {
       /* There will only be a single doc w the right date, so this only runs once */
@@ -131,7 +139,10 @@ function Home() {
     });
   }
   // Separate function to update median points (call this when votes change)
-  async function updateChallengeMedian(challengeId: string, votes: {uuid: string, points: number}[]) {
+  async function updateChallengeMedian(
+    challengeId: string,
+    votes: { uuid: string; points: number }[]
+  ) {
     if (!Array.isArray(votes) || votes.length === 0) return;
 
     const sortedVotes = [...votes].sort((a, b) => a.points - b.points);
@@ -160,26 +171,31 @@ function Home() {
 
   // Clean listener function that only reads data
   async function getChallenges() {
-    const unsub = onSnapshot(collection(db, "challenges"), (collection) => {
-      const challenges: Challenge[] = [];
+    const unsub = onSnapshot(
+      collection(db, `challenges-5-${currentDate}`),
+      (collection) => {
+        const challenges: Challenge[] = [];
 
-      collection.forEach((document) => {
-        const data = document.data() as Challenge;
-        challenges.push(data);
-      });
+        collection.forEach((document) => {
+          const data = document.data() as Challenge;
+          challenges.push(data);
+        });
 
-      console.log("challenges currently", challenges);
+        console.log("challenges currently", challenges);
 
-      setNormalChallenges(
-        challenges.filter((challenge) => challenge.challengeType === "Normal")
-      );
-      setDailyChallenges(
-        challenges.filter((challenge) => challenge.challengeType === "Daily")
-      );
-      setNegativeChallenges(
-        challenges.filter((challenge) => challenge.challengeType === "Negative")
-      );
-    });
+        setNormalChallenges(
+          challenges.filter((challenge) => challenge.challengeType === "Normal")
+        );
+        setDailyChallenges(
+          challenges.filter((challenge) => challenge.challengeType === "Daily")
+        );
+        setNegativeChallenges(
+          challenges.filter(
+            (challenge) => challenge.challengeType === "Negative"
+          )
+        );
+      }
+    );
   }
 
   // Call updateChallengeMedian only when votes are submitted, not in the listener
@@ -199,9 +215,12 @@ function Home() {
 
   async function claimChallenge(uuid: string) {
     if (selectedChallenge) {
-      updateDoc(doc(db, "challenges", selectedChallenge.challengeID.toString()), {
-        playersCompleted: [...selectedChallenge.playersCompleted, uuid]
-      })
+      updateDoc(
+        doc(db, "challenges", selectedChallenge.challengeID.toString()),
+        {
+          playersCompleted: [...selectedChallenge.playersCompleted, uuid],
+        }
+      );
 
       if (teamsDoc) {
         const currentTeamsDoc = teamsDoc;
@@ -211,25 +230,24 @@ function Home() {
             break;
           }
         }
-        const currentDate = new Date().getDate();
-        const docsSnap = await getDocs(query(collection(db, "teams"), where("date", "==", currentDate)));
+        const docsSnap = await getDocs(
+          query(collection(db, "teams"), where("date", "==", currentDate[0]))
+        );
         docsSnap.forEach((document) => {
           updateDoc(doc(db, "teams", document.id), {
-            teams: currentTeamsDoc.teams
-          })
-        })
+            teams: currentTeamsDoc.teams,
+          });
+        });
+      } else {
+        alert(
+          "Your team could not be found. Please close the claim window and try again."
+        );
       }
-      else {
-        alert("Your team could not be found. Please close the claim window and try again.");
-      }
 
-
-
-      alert(`Challenge claimed for ${playersMap[uuid]}!`)
+      alert(`Challenge claimed for ${playersMap[uuid]}!`);
       setSelectedChallenge(null);
       setShowModal("");
-    }
-    else {
+    } else {
       alert("An error occurred. Please close the claim window and try again.");
     }
   }
@@ -385,7 +403,17 @@ function Home() {
     <AuthProvider>
       <div className="w-full min-h-[100vh] overflow-y-scroll">
         {/* Top part w the score */}
-        <div className="fixed flex flex-col h-[35vh] w-full justify-center items-center -z-10">
+
+        <div className="flex py-8 flex-col items-center justify-center">
+          <button
+            className="px-4 py-2 mb-4 bg-bgmedium text-textlight rounded-lg transition-colors hover:opacity-50"
+            onClick={() => {
+              setShowModal("date");
+            }}
+          >
+            <small>Change Date</small>
+          </button>
+          <div className="fixed flex flex-col h-[35vh] w-full justify-center items-center -z-10"></div>
           <p
             className="text-textsecondary"
             style={{ fontFamily: "var(--font-dm-mono)" }}
@@ -481,22 +509,79 @@ function Home() {
             </p>
             {Object.entries(playersMap).map(([uuid, name]) => (
               <div key={uuid} className="flex justify-between gap-8">
-                <p className="text-textlight">
-                  {name}
-                </p>
+                <p className="text-textlight">{name}</p>
                 <button
-                  className={`${selectedChallenge?.playersCompleted.some((person) => person === uuid) ? "bg-buttondisabled/60" : "bg-bglight hover:bg-accent active:bg-accent"} px-4 py-2 rounded-lg transition-colors`}
+                  className={`${
+                    selectedChallenge?.playersCompleted.some(
+                      (person) => person === uuid
+                    )
+                      ? "bg-buttondisabled/60"
+                      : "bg-bglight hover:bg-accent active:bg-accent"
+                  } px-4 py-2 rounded-lg transition-colors`}
                   onClick={() => claimChallenge(uuid)}
-                  disabled={selectedChallenge?.playersCompleted.some((person) => person === uuid)}
+                  disabled={selectedChallenge?.playersCompleted.some(
+                    (person) => person === uuid
+                  )}
                 >
-                  {selectedChallenge?.playersCompleted.some((person) => person === uuid) ? "Claimed" : "Claim"}
+                  {selectedChallenge?.playersCompleted.some(
+                    (person) => person === uuid
+                  )
+                    ? "Claimed"
+                    : "Claim"}
                 </button>
               </div>
             ))}
           </div>
         </div>
       )}
-
+      {/* 
+<div>
+        <Slider
+          defaultValue={[date]}
+          max={31}
+          step={1}
+          min={1}
+          onValueChange={(value) => {
+            setCurrentDate(value);
+          }}
+          className="w-full h-24 z-10"
+        />
+      </div>
+*/}
+      {/* Change the date Modal */}
+      {showModal === "date" && (
+        <div
+          className="fixed top-0 bg-bgdark/90 w-full h-[100vh] z-10 flex items-center justify-center-safe"
+          onClick={() => {
+            setShowModal("");
+            setSelectedChallenge(null);
+            setSliderVal([0]);
+            bb.current = true;
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-bgmedium max-w-[90%] w-[400px] h-[200px] p-8 rounded-2xl"
+          >
+            <div className="flex flex-col items-center justify-center mx-auto">
+              <h2 className="text-textlight">{sliderDate}</h2>
+            </div>
+            <Slider
+              defaultValue={[1]}
+              max={31}
+              step={1}
+              min={1}
+              onValueChange={(value) => {
+                setSliderDate(value);
+              }}
+              onValueCommit={(value) => {
+                setCurrentDate(value);
+              }}
+              className="w-full h-24 z-10"
+            />
+          </div>
+        </div>
+      )}
       {/* Vote on points Modal */}
       {showModal === "vote" && (
         <div
