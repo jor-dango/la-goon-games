@@ -130,7 +130,7 @@ function Home() {
                     ...prev,
                     points: doc.data().teams[i].points,
                   }));
-                  setTeamsDoc(document.data() as TeamsDoc); // Note that we only live-update TeamsDoc if we find a user..which is fine? I'm too tired for this
+                  setTeamsDoc(doc.data() as TeamsDoc); // Note that we only live-update TeamsDoc if we find a user..which is fine? I'm too tired for this
                 }
               });
             }
@@ -160,7 +160,9 @@ function Home() {
     }
 
     // Get current document to check if update is needed
-    const docSnap = await getDoc(doc(db, `challenges-5-${currentDate}`, challengeId));
+    const docSnap = await getDoc(
+      doc(db, `challenges-5-${currentDate}`, challengeId)
+    );
     if (docSnap.exists()) {
       const currentData = docSnap.data() as Challenge;
       if (currentData.pointval !== medianPoints) {
@@ -218,7 +220,11 @@ function Home() {
   async function claimChallenge(uuid: string) {
     if (selectedChallenge) {
       updateDoc(
-        doc(db, `challenges-5-${currentDate}`, selectedChallenge.challengeID.toString()),
+        doc(
+          db,
+          `challenges-5-${currentDate}`,
+          selectedChallenge.challengeID.toString()
+        ),
         {
           playersCompleted: [...selectedChallenge.playersCompleted, uuid],
         }
@@ -267,17 +273,14 @@ function Home() {
         for (const j in teamsDoc.teams[i].uuids) {
           const uuidToUpdate = teamsDoc.teams[i].uuids[j];
           // const key = (Object.keys(playersMap) as Array<string>).find(key => playersMap[key] === teamsDoc.teams[i].uuids[j]);
-          const player = players.find(player => player.id === uuidToUpdate);
+          const player = players.find((player) => player.id === uuidToUpdate);
           const playerData = player?.data() as UserInfo;
           updateDoc(doc(db, "players", uuidToUpdate), {
-            points: playerData.points + pointVal
-          })
+            points: playerData.points + pointVal,
+          });
         }
-        
       }
-    }  
-
-
+    }
   }
 
   // const meow = { uuid: "XVQPNCALhXU6iPqIVb7mCOFX5ez1", points: 25 };
@@ -429,10 +432,7 @@ function Home() {
 
   return (
     <AuthProvider>
-      <button
-      onClick={updatePlayerPoints}
-      className="fixed"
-      >
+      <button onClick={updatePlayerPoints} className="fixed">
         Update Player Points
       </button>
       <div className="w-full min-h-[100vh] overflow-y-scroll">
