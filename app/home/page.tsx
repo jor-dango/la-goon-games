@@ -160,11 +160,11 @@ function Home() {
     }
 
     // Get current document to check if update is needed
-    const docSnap = await getDoc(doc(db, "challenges", challengeId));
+    const docSnap = await getDoc(doc(db, `challenges-5-${currentDate}`, challengeId));
     if (docSnap.exists()) {
       const currentData = docSnap.data() as Challenge;
       if (currentData.pointval !== medianPoints) {
-        await updateDoc(doc(db, "challenges", challengeId), {
+        await updateDoc(doc(db, `challenges-5-${currentDate}`, challengeId), {
           pointval: medianPoints,
         });
       }
@@ -218,7 +218,7 @@ function Home() {
   async function claimChallenge(uuid: string) {
     if (selectedChallenge) {
       updateDoc(
-        doc(db, "challenges", selectedChallenge.challengeID.toString()),
+        doc(db, `challenges-5-${currentDate}`, selectedChallenge.challengeID.toString()),
         {
           playersCompleted: [...selectedChallenge.playersCompleted, uuid],
         }
