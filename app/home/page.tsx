@@ -273,11 +273,56 @@ function Home() {
             points: playerData.points + pointVal
           })
         }
-        
+
       }
-    }  
+    }
+  }
+
+  async function syncTeamPoints() {
+    if (normalChallenges && negativeChallenges && dailyChallenges) {
+      const challenges = [...normalChallenges, ...negativeChallenges, ...dailyChallenges];
+
+      if (teamsDoc) {
+        const currentTeamsDoc = teamsDoc;
+        let k = 0;
+        for (const i in currentTeamsDoc.teams) { // Zero out all team point vals before doing all the summing down there ↓
+          currentTeamsDoc.teams[i].points = 0;
+        }
+        challenges.forEach(async (challenge) => {
+          console.log("challenge worth ", challenge.pointval ," points: ", challenge.challenge);
 
 
+          challenge.playersCompleted.forEach((uuid) => {
+            console.log("completed player: ", uuid, ", ", playersMap[uuid]);
+            for (const i in currentTeamsDoc.teams) {
+              if (currentTeamsDoc.teams[i].uuids.some((id) => id === uuid)) {
+                console.log("completed player in: ", uuid, ", ", playersMap[uuid]);
+                currentTeamsDoc.teams[i].points += challenge.pointval;
+                k += 1;
+                console.log(k);
+                console.log("updated team ", i, " pointval to ", currentTeamsDoc.teams[i].points);
+              }
+            }
+          });
+        });
+
+        const docsSnap = await getDocs(
+          query(collection(db, "teams"), where("date", "==", currentDate[0]))
+        );
+        docsSnap.forEach((document) => {
+          updateDoc(doc(db, "teams", document.id), {
+            teams: currentTeamsDoc.teams,
+          });
+        });
+
+      } else {
+        alert(
+          "Your team could not be found. Please close the claim window and try again."
+        );
+      }
+
+
+    }
   }
 
   // const meow = { uuid: "XVQPNCALhXU6iPqIVb7mCOFX5ez1", points: 25 };
@@ -370,18 +415,18 @@ function Home() {
           <strong>
             {/* If every user has submitted */}
             {challenge.proposedpointval &&
-            challenge.proposedpointval.length >= numPlayers
+              challenge.proposedpointval.length >= numPlayers
               ? "Final Points: " + challenge.pointval
               : // else if the user has submitted a point value
               challenge.proposedpointval &&
                 challenge.proposedpointval.some((p) => p.uuid === user?.uid)
-              ? "Projected Points: " + challenge.pointval
-              : // else (user has not submited a point value)
+                ? "Projected Points: " + challenge.pointval
+                : // else (user has not submited a point value)
                 "Projected Points: Hidden"}
           </strong>
         </p>
         {challenge.proposedpointval &&
-        challenge.proposedpointval.length >= numPlayers ? (
+          challenge.proposedpointval.length >= numPlayers ? (
           <button
             className="px-4 py-2 bg-accent rounded-lg w-full transition-colors hover:bg-buttonhover active:bg-buttonhover"
             onClick={() => {
@@ -429,16 +474,22 @@ function Home() {
 
   return (
     <AuthProvider>
-      <button
-      onClick={updatePlayerPoints}
-      className="fixed"
-      >
-        Update Player Points
-      </button>
       <div className="w-full min-h-[100vh] overflow-y-scroll">
         {/* Top part w the score */}
 
         <div className="flex py-8 flex-col items-center justify-center">
+          <button
+            onClick={updatePlayerPoints}
+            className="px-4 py-2 mb-4 bg-bgmedium text-textlight rounded-lg transition-colors hover:opacity-50"
+          >
+            <small>Update Individual Player Points</small>
+          </button>
+          <button
+            onClick={syncTeamPoints}
+            className="px-4 py-2 mb-4 bg-bgmedium text-textlight rounded-lg transition-colors hover:opacity-50"
+          >
+            <small>Recalculate Team Points</small>
+          </button>
           <button
             className="px-4 py-2 mb-4 bg-bgmedium text-textlight rounded-lg transition-colors hover:opacity-50"
             onClick={() => {
@@ -545,13 +596,12 @@ function Home() {
               <div key={uuid} className="flex justify-between gap-8">
                 <p className="text-textlight">{name}</p>
                 <button
-                  className={`${
-                    selectedChallenge?.playersCompleted.some(
-                      (person) => person === uuid
-                    )
-                      ? "bg-buttondisabled/60"
-                      : "bg-bglight hover:bg-accent active:bg-accent"
-                  } px-4 py-2 rounded-lg transition-colors`}
+                  className={`${selectedChallenge?.playersCompleted.some(
+                    (person) => person === uuid
+                  )
+                    ? "bg-buttondisabled/60"
+                    : "bg-bglight hover:bg-accent active:bg-accent"
+                    } px-4 py-2 rounded-lg transition-colors`}
                   onClick={() => claimChallenge(uuid)}
                   disabled={selectedChallenge?.playersCompleted.some(
                     (person) => person === uuid
