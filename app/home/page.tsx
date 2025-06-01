@@ -295,7 +295,7 @@ function Home() {
           currentTeamsDoc.teams[i].points = 0;
         }
         challenges.forEach(async (challenge) => {
-          console.log("challenge worth ", challenge.pointval ," points: ", challenge.challenge);
+          console.log("challenge worth ", challenge.pointval, " points: ", challenge.challenge);
 
 
           challenge.playersCompleted.forEach((uuid) => {
@@ -727,7 +727,7 @@ function Home() {
                     await updateDoc(
                       doc(
                         db,
-                        "challenges",
+                        `challenges-5-${currentDate}`,
                         selectedChallenge.challengeID.toString()
                       ),
                       {
