@@ -261,7 +261,7 @@ function Home() {
   }
 
   async function updatePlayerPoints() {
-    let players: QueryDocumentSnapshot<DocumentData, DocumentData>[] = [];
+    const players: QueryDocumentSnapshot<DocumentData, DocumentData>[] = [];
     const docsSnap = await getDocs(collection(db, "players"));
     docsSnap.forEach((document) => {
       players.push(document);
